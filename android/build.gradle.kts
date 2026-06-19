@@ -22,3 +22,32 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+subprojects {
+    if (state.executed) {
+        val androidExt = extensions.findByName("android")
+        if (androidExt != null) {
+            try {
+                androidExt.javaClass.getMethod("setCompileSdk", java.lang.Integer::class.java).invoke(androidExt, 36)
+            } catch (e: Exception) {
+                try {
+                    androidExt.javaClass.getMethod("compileSdkVersion", Int::class.java).invoke(androidExt, 36)
+                } catch (ex: Exception) {}
+            }
+        }
+    } else {
+        afterEvaluate {
+            val androidExt = extensions.findByName("android")
+            if (androidExt != null) {
+                try {
+                    androidExt.javaClass.getMethod("setCompileSdk", java.lang.Integer::class.java).invoke(androidExt, 36)
+                } catch (e: Exception) {
+                    try {
+                        androidExt.javaClass.getMethod("compileSdkVersion", Int::class.java).invoke(androidExt, 36)
+                    } catch (ex: Exception) {}
+                }
+            }
+        }
+    }
+}
+

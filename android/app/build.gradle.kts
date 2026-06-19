@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.labhouse.radiotuner.flutter_radio_tuner"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

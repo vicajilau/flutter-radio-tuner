@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../../models/station_model.dart';
@@ -62,6 +64,7 @@ class RadioProvider with ChangeNotifier {
 
   RadioProvider(this._repository) {
     _initPlayerListeners();
+    _initVolumeController();
     _initData();
   }
 
@@ -88,11 +91,8 @@ class RadioProvider with ChangeNotifier {
       },
     );
 
-    // Sync volume from player to provider
-    _player.volumeStream.listen((vol) {
-      _volume = vol;
-      notifyListeners();
-    });
+    // Player internal volume stays at 1.0 (controlled by system volume)
+    _player.setVolume(1.0);
   }
 
   Future<void> _initData() async {
@@ -222,6 +222,9 @@ class RadioProvider with ChangeNotifier {
       return;
     }
 
+    // Ensure player internal volume is reset to 1.0 (in case sleep timer was active)
+    await _player.setVolume(1.0);
+
     _currentStation = station;
     _isBuffering = true;
     _errorMessage = null;
@@ -232,8 +235,8 @@ class RadioProvider with ChangeNotifier {
     loadHistory(); // Reload history from SharedPreferences
 
     try {
-      // Configure player volume before loading
-      await _player.setVolume(_volume);
+      // Keep player internal volume at 1.0 so output matches system volume 100%
+      await _player.setVolume(1.0);
 
       // Use url_resolved as recommended by the API documentation
       final String streamUrl = station.urlResolved.isNotEmpty
@@ -277,10 +280,47 @@ class RadioProvider with ChangeNotifier {
     }
   }
 
+  /// Initialize system volume listener and configuration
+  Future<void> _initVolumeController() async {
+    final bool isTest =
+        !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (isTest) {
+      _volume = 1.0;
+      return;
+    }
+
+    try {
+      // Hide system volume UI overlay to avoid clashing with our custom slider
+      await FlutterVolumeController.updateShowSystemUI(false);
+
+      final double? systemVolume = await FlutterVolumeController.getVolume();
+      if (systemVolume != null) {
+        _volume = systemVolume;
+        notifyListeners();
+      }
+
+      FlutterVolumeController.addListener((vol) {
+        _volume = vol;
+        notifyListeners();
+      });
+    } catch (e) {
+      developer.log('Failed to initialize volume controller: $e');
+    }
+  }
+
   /// Adjust the playback volume.
   void setVolume(double val) {
     _volume = val.clamp(0.0, 1.0);
-    _player.setVolume(_volume);
+
+    final bool isTest =
+        !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (!isTest) {
+      try {
+        FlutterVolumeController.setVolume(_volume);
+      } catch (e) {
+        developer.log('Failed to set system volume: $e');
+      }
+    }
     notifyListeners();
   }
 
@@ -317,21 +357,23 @@ class RadioProvider with ChangeNotifier {
     _sleepTimer = Timer(duration, () async {
       developer.log('Sleep timer triggered. Stopping playback.');
 
-      // Beautiful fade out volume logic
+      // Beautiful fade out player volume logic (affects player only, keeping system volume intact)
       const int steps = 10;
-      final double initialVolume = _volume;
-      final double stepVolume = initialVolume / steps;
+      final double initialPlayerVolume = _player.volume;
+      final double stepVolume = initialPlayerVolume / steps;
 
       for (int i = 1; i <= steps; i++) {
         await Future.delayed(const Duration(milliseconds: 150));
-        setVolume((initialVolume - (stepVolume * i)).clamp(0.0, 1.0));
+        await _player.setVolume(
+          (initialPlayerVolume - (stepVolume * i)).clamp(0.0, 1.0),
+        );
       }
 
       // Stop player
       _player.pause();
 
-      // Restore original volume for next playback
-      setVolume(initialVolume);
+      // Restore original player volume for next playback
+      await _player.setVolume(initialPlayerVolume);
 
       cancelSleepTimer();
     });
@@ -349,6 +391,15 @@ class RadioProvider with ChangeNotifier {
 
   @override
   void dispose() {
+    final bool isTest =
+        !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (!isTest) {
+      try {
+        FlutterVolumeController.removeListener();
+      } catch (e) {
+        developer.log('Failed to remove volume listener: $e');
+      }
+    }
     _player.dispose();
     _sleepTimer?.cancel();
     _countdownTimer?.cancel();
