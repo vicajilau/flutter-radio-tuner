@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import '../../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
@@ -240,7 +241,19 @@ class RadioProvider with ChangeNotifier {
           : station.url;
 
       developer.log('Loading live radio stream: $streamUrl');
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(streamUrl)));
+      await _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(streamUrl),
+          tag: MediaItem(
+            id: station.stationuuid,
+            album: station.country.isNotEmpty ? station.country : 'Radio Tuner',
+            title: station.name,
+            artUri: station.favicon.isNotEmpty
+                ? Uri.tryParse(station.favicon)
+                : null,
+          ),
+        ),
+      );
 
       // Auto-play
       _player.play();

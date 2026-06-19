@@ -343,13 +343,19 @@ class PlayerScreen extends StatelessWidget {
                                     size: 26,
                                   ),
                                   onPressed: () async {
-                                    final String urlString = station.homepage.trim();
+                                    final String urlString = station.homepage
+                                        .trim();
                                     if (urlString.isEmpty) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('No website available for this station.'),
-                                            backgroundColor: AppTheme.surfaceLight,
+                                            content: Text(
+                                              'No website available for this station.',
+                                            ),
+                                            backgroundColor:
+                                                AppTheme.surfaceLight,
                                           ),
                                         );
                                       }
@@ -357,12 +363,20 @@ class PlayerScreen extends StatelessWidget {
                                     }
 
                                     final Uri? uri = Uri.tryParse(urlString);
-                                    if (uri == null || !uri.hasScheme || (uri.scheme != 'http' && uri.scheme != 'https')) {
+                                    if (uri == null ||
+                                        !uri.hasScheme ||
+                                        (uri.scheme != 'http' &&
+                                            uri.scheme != 'https')) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Invalid station website URL.'),
-                                            backgroundColor: AppTheme.surfaceLight,
+                                            content: Text(
+                                              'Invalid station website URL.',
+                                            ),
+                                            backgroundColor:
+                                                AppTheme.surfaceLight,
                                           ),
                                         );
                                       }
@@ -370,12 +384,19 @@ class PlayerScreen extends StatelessWidget {
                                     }
 
                                     try {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
                                     } catch (e) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
-                                            content: Text('Could not open: $urlString'),
+                                            content: Text(
+                                              'Could not open: $urlString',
+                                            ),
                                             backgroundColor: Colors.redAccent,
                                           ),
                                         );

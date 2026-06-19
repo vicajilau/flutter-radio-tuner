@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/services/audio_initializer.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/api_service.dart';
 import 'core/services/favorites_service.dart';
@@ -9,8 +10,9 @@ import 'providers/favorites_provider.dart';
 import 'providers/radio_provider.dart';
 import 'ui/screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AudioInitializer.initialize();
   runApp(const MyApp());
 }
 
