@@ -91,8 +91,8 @@ class RadioProvider with ChangeNotifier {
       },
     );
 
-    // Player internal volume stays at 1.0 (controlled by system volume)
-    _player.setVolume(1.0);
+    // Initialize player internal volume to match default volume
+    _player.setVolume(_volume);
   }
 
   Future<void> _initData() async {
@@ -222,8 +222,8 @@ class RadioProvider with ChangeNotifier {
       return;
     }
 
-    // Ensure player internal volume is reset to 1.0 (in case sleep timer was active)
-    await _player.setVolume(1.0);
+    // Ensure player internal volume is reset to match system volume
+    await _player.setVolume(_volume);
 
     _currentStation = station;
     _isBuffering = true;
@@ -235,8 +235,8 @@ class RadioProvider with ChangeNotifier {
     loadHistory(); // Reload history from SharedPreferences
 
     try {
-      // Keep player internal volume at 1.0 so output matches system volume 100%
-      await _player.setVolume(1.0);
+      // Keep player internal volume matching system volume
+      await _player.setVolume(_volume);
 
       // Use url_resolved as recommended by the API documentation
       final String streamUrl = station.urlResolved.isNotEmpty
@@ -296,11 +296,13 @@ class RadioProvider with ChangeNotifier {
       final double? systemVolume = await FlutterVolumeController.getVolume();
       if (systemVolume != null) {
         _volume = systemVolume;
+        _player.setVolume(systemVolume);
         notifyListeners();
       }
 
       FlutterVolumeController.addListener((vol) {
         _volume = vol;
+        _player.setVolume(vol);
         notifyListeners();
       });
     } catch (e) {
@@ -308,7 +310,6 @@ class RadioProvider with ChangeNotifier {
     }
   }
 
-  /// Adjust the playback volume.
   void setVolume(double val) {
     _volume = val.clamp(0.0, 1.0);
 
@@ -321,6 +322,10 @@ class RadioProvider with ChangeNotifier {
         developer.log('Failed to set system volume: $e');
       }
     }
+
+    // Also update player internal volume so it works on iOS/Android Simulators
+    _player.setVolume(_volume);
+
     notifyListeners();
   }
 
