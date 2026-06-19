@@ -1,59 +1,93 @@
+<p align="center">
+  <img src=".github/assets/app_icon_transparent.png" width="160" alt="Labhouse FM Logo" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/vicajilau/flutter-radio-tuner/actions/workflows/ci.yml">
+    <img src="https://github.com/vicajilau/flutter-radio-tuner/actions/workflows/ci.yml/badge.svg" alt="Flutter CI" />
+  </a>
+</p>
+
 # Labhouse FM - Premium Flutter Radio Tuner
 
-A state-of-the-art Flutter radio streaming application featuring a dark-themed glassmorphic design, custom canvas animations, and a rich user experience. It pulls live global radio stations from the community-driven **Radio Browser API**, streams audio seamlessly using **`just_audio`**, and offers high-fidelity features like local favorites persistence, playback history, and a sleep timer.
+A state-of-the-art Flutter mobile application for streaming live global radio stations. Built with a high-end dark glassmorphic design, custom canvas animations, and a decoupled architecture that is 100% testable.
 
 ---
 
-## 🌟 Key Features
+## 📻 What the App Does & How It Works
 
-*   **Global Radio Database:** Browse and stream tens of thousands of active stations worldwide using the free, open-source Radio Browser API.
-*   **Deep Glassmorphism UI:** Immersive dark design featuring glass translucent containers, glowing gradients, custom badges, and modern typography (Outfit & Inter).
-*   **Organic Wave Visualizer:** A custom-painted fluid audio wave visualizer that animates procedurally when music is playing and lies flat when paused.
-*   **Interactive Mini-Player:** A persistent floating bottom player allowing quick play/pause controls, metadata reading, and smooth sliding transitions to the full-screen view.
-*   **Sleep Timer:** Set custom durations (5, 15, 30, 45, 60 minutes) to automatically fade out the audio and pause playback.
-*   **Local Persistence:** Instantly save stations to a dedicated **Favorites** deck or view recently played stations in the **History** row.
-*   **Live Stream Resolution:** Resolves active API servers dynamically on boot and utilizes resolved stream URLs to handle redirects and playlists natively.
+**Labhouse FM** allows users to discover, search, and stream radio stations from around the world.
+
+### Dynamic API Resolution & Data Fetching
+On boot, the app does not rely on a hardcoded server. Instead, it contacts the community-driven **Radio Browser API** resolver at `https://all.api.radio-browser.info/json/servers` to dynamically find the best active, online mirror. Once a base URL is resolved, the app fetches:
+*   **Popular Stations:** High-traffic stations using `/json/stations/topclick`.
+*   **Popular Genres/Tags:** Top tags by station counts using `/json/tags`.
+*   **Custom Searches:** Searches filtered by query name or tag using `/json/stations/search`.
+
+### Seamless Background Audio
+When a station is selected, the app resolves its streaming URL and plays it. It handles redirects and playlists natively, keeping playback alive even when the phone is locked or the application is in the background.
 
 ---
 
-## 🛠 Tech Stack
+## 📦 Dependencies & Why We Use Them
 
-*   **Core Framework:** Flutter (3.x) & Dart
-*   **Audio Engine:** [just_audio](https://pub.dev/packages/just_audio) (High-fidelity live stream buffer management)
-*   **HTTP Client:** [dio](https://pub.dev/packages/dio) (Network requests, custom User-Agent, and connection timeouts)
-*   **State Management:** [provider](https://pub.dev/packages/provider) (Legible, reactive change notifications)
-*   **Local Persistence:** [shared_preferences](https://pub.dev/packages/shared_preferences) (Key-value disk storage for Favorites and History)
-*   **UI Helpers:** [shimmer](https://pub.dev/packages/shimmer) (Premium skeleton loading effects), [google_fonts](https://pub.dev/packages/google_fonts) (Premium modern typography)
+The project relies on specific, curated packages to achieve an enterprise-grade experience:
+
+### Audio & Playback Engine
+*   **[just_audio](https://pub.dev/packages/just_audio):** The core audio engine. We use it for its high-fidelity buffering, seamless stream playing capability, and detailed playback state streams.
+*   **[just_audio_background](https://pub.dev/packages/just_audio_background):** Integrates our playback service with the OS. It registers the app as a foreground service on Android and handles lock screen controls, notifications, and metadata updates on both Android and iOS.
+*   **[audio_session](https://pub.dev/packages/audio_session):** Manages audio focus policies (e.g., pausing when a call is received, routing audio to headphones, and bypassing the physical mute switch on iOS for media playback).
+*   **[flutter_volume_controller](https://pub.dev/packages/flutter_volume_controller):** Synchronizes the system hardware volume controls with the in-app player volume slider.
+
+### Networking & State Management
+*   **[dio](https://pub.dev/packages/dio):** A powerful HTTP client. Used to fetch data from the Radio Browser API, handling request timeouts, custom User-Agents, and JSON parsing.
+*   **[provider](https://pub.dev/packages/provider):** A lightweight state management framework. We use it to register our dependency injection tree and notify UI widgets when playback, volume, or searches update.
+
+### Data Persistence & UI UX
+*   **[shared_preferences](https://pub.dev/packages/shared_preferences):** A persistent key-value store. Used to persist the user's favorite stations and recently played history list across application restarts.
+*   **[shimmer](https://pub.dev/packages/shimmer):** Renders glowing placeholder animations during active data fetches to create a premium visual experience.
+*   **[google_fonts](https://pub.dev/packages/google_fonts):** Loads premium typography (Outfit and Inter) dynamically without bloating the app package.
+*   **[url_launcher](https://pub.dev/packages/url_launcher):** Opens a station's homepage website in the device's default web browser.
 
 ---
 
 ## 📂 Project Architecture
 
+The codebase follows the **Repository Pattern** and enforces **Dependency Inversion** through constructor injection:
+
 ```
 lib/
-├── main.dart                  # Sets up global Providers, Theme, and Launches Splash Screen
+├── main.dart                  # Dependency Injection tree setup & MaterialApp entry point
 ├── core/
 │   ├── theme/
-│   │   └── app_theme.dart     # Defines colors, gradients, and custom TextThemes
-│   └── services/
-│       ├── api_service.dart   # Dio client fetching Radio Browser API endpoints
-│       ├── favorites_service.dart # Local persistence for favorited stations
-│       └── history_service.dart   # Local persistence for played history
+│   │   └── app_theme.dart     # Central styling system (gradients, dark theme, typography)
+│   ├── services/
+│   │   ├── api_service.dart   # Service interface & implementation communicating with Radio Browser API
+│   │   ├── audio_initializer.dart # Handles audio session initialization & background playback settings
+│   │   ├── favorites_service.dart # Local persistence layer for favorited stations
+│   │   └── history_service.dart   # Local persistence layer for playback history
+│   └── repositories/
+│       └── station_repository.dart # Aggregates API & local services (Single Source of Truth)
 ├── models/
-│   └── station_model.dart     # Station data representation & JSON parser
+│   └── station_model.dart     # Station serialization & field fallbacks
 ├── providers/
-│   ├── favorites_provider.dart # Manages favoriting reactive state
-│   └── radio_provider.dart    # Manages play/pause, volume, sleep timer, & search queries
+│   ├── favorites_provider.dart # Manages favorite lists and UI notifications
+│   └── radio_provider.dart    # Manages player state, sleep timers, volume sync, and searches
 └── ui/
     ├── widgets/
-    │   ├── glass_container.dart # Translucent blur styling layout
-    │   ├── station_tile.dart    # List tiles for radio entries
+    │   ├── glass_container.dart # Glassmorphic visual container wrapping UI elements
+    │   ├── visualizer.dart      # CustomPainter rendering glowing procedural waveforms
     │   ├── mini_player.dart     # Floating bottom player bar
-    │   └── visualizer.dart      # CustomPainter overlapping sine waves
+    │   ├── station_tile.dart    # Individual station list item with equalizer animation
+    │   ├── genre_selector.dart  # Genre selector chips row
+    │   ├── favorite_card.dart   # Card representation of a favorite station
+    │   ├── history_tile.dart    # Compact recently played item
+    │   ├── sleep_timer_sheet.dart # Selection panel for sleep durations
+    │   └── station_shimmer.dart # Loading skeleton placeholders
     └── screens/
-        ├── splash_screen.dart   # Pulsing launch logo & initialization sequence
-        ├── home_screen.dart     # Main browse page with search and decks
-        └── player_screen.dart   # Full-screen player with volume and sleep timer
+        ├── splash_screen.dart   # Entry logo animations and API resolving sequences
+        ├── home_screen.dart     # Main dashboard (search, decks, and error screens)
+        └── player_screen.dart   # Full-screen player with volume and sleep timers
 ```
 
 ---
@@ -61,74 +95,35 @@ lib/
 ## 🚀 How to Run the Application
 
 ### 📋 Prerequisites
-
-Before running the application, make sure you have the following installed on your system:
-*   **Flutter SDK** (Version `>= 3.12.2`) - [Install Flutter](https://docs.flutter.dev/get-started/install)
+*   **Flutter SDK** (`>= 3.12.2`) - [Install Flutter](https://docs.flutter.dev/get-started/install)
 *   **CocoaPods** (for iOS builds)
-*   **Xcode** (Required for running on iOS Simulator / Physical Device)
-*   **Android Studio & SDK** (Required for running on Android Emulator / Physical Device)
+*   **Xcode** (Required for iOS builds)
+*   **Android Studio & SDK** (Required for Android builds)
 
----
-
-### 📥 Setup Instructions
+### 📥 Run Commands
 
 1.  **Clone the Repository** and navigate to the project root:
     ```bash
     cd /Users/vicajilau/Developer/Flutter/flutter-radio-tuner
     ```
 
-2.  **Download Dependencies:**
-    Fetch the Dart packages resolved in `pubspec.yaml`:
+2.  **Download Packages:**
     ```bash
     flutter pub get
     ```
 
-3.  **Run Static Code Analysis:**
-    Ensure there are no compilation or syntax issues:
+3.  **Run Static Analysis:**
     ```bash
     flutter analyze
     ```
 
 4.  **Run Automated Tests:**
-    Execute the unit test suite to verify model and state provider logic:
     ```bash
     flutter test
     ```
 
----
-
-### 📱 Launching on Simulators/Emulators
-
-#### Running on iOS (Simulator)
-
-1.  List and start the iOS simulator:
+5.  **Run the App:**
     ```bash
-    flutter emulators --launch apple_ios_simulator
-    ```
-2.  Deploy and run the app on the active iOS simulator:
-    ```bash
-    flutter run -d iPhone
+    flutter run
     ```
 
-#### Running on Android (Emulator)
-
-1.  List and start the Android emulator:
-    ```bash
-    flutter emulators --launch 16_KB_Medium_Phone
-    ```
-2.  Deploy and run the app:
-    ```bash
-    flutter run -d android
-    ```
-
----
-
-## 🔧 Platform Configurations (Details)
-
-### Android Configuration
-*   **Permissions:** Request internet access and network state check in `android/app/src/main/AndroidManifest.xml`.
-*   **Cleartext Traffic:** Enabled `android:usesCleartextTraffic="true"` to allow streaming from radio stations serving on HTTP protocols rather than HTTPS.
-
-### iOS Configuration
-*   **Background Audio:** Configured `UIBackgroundModes` with `audio` in `ios/Runner/Info.plist` to keep streams playing when locking the phone or backgrounding the app.
-*   **Transport Security:** Added `NSAppTransportSecurity` configuration allowing arbitrary HTTP loads to prevent iOS from blocking non-HTTPS radio streams.
