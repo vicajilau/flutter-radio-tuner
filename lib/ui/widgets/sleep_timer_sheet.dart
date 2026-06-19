@@ -3,6 +3,8 @@ import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
+/// Bottom sheet widget allowing users to select or cancel a sleep timer duration.
+/// Schedules automatic playback stoppage based on chosen presets.
 class SleepTimerSheet extends StatelessWidget {
   final RadioProvider radioProvider;
 

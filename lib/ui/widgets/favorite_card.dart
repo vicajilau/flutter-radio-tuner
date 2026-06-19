@@ -4,6 +4,9 @@ import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
+/// Grid item / card widget displaying a favorited radio station.
+/// Renders the station favicon, name, country, and responds to tap actions
+/// to trigger instant audio playback.
 class FavoriteCard extends StatelessWidget {
   final Station station;
   final RadioProvider radioProvider;

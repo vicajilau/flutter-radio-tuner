@@ -5,6 +5,9 @@ import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'home_screen.dart';
 
+/// Animated entry point screen of the application.
+/// Displays branding, resolves the active Radio Browser API server,
+/// and pre-loads initial data before navigating to the home dashboard.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -12,6 +15,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+/// Animation and initialization logic state for [SplashScreen].
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;

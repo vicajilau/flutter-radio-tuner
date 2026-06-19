@@ -2,6 +2,9 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import '../../models/station_model.dart';
 
+/// Interface for the API service.
+/// Declares operations to communicate with the Radio Browser API,
+/// including server initialization, station search, and fetching popular tags.
 abstract class ApiService {
   Future<void> initialize();
   Future<List<Station>> getTopStations({int limit});
@@ -16,6 +19,8 @@ abstract class ApiService {
   Future<List<Map<String, String>>> getTopCountries({int limit});
 }
 
+/// Concrete implementation of [ApiService] using the Dio HTTP client.
+/// Dynamically resolves the best active server from the Radio Browser network.
 class DioApiService implements ApiService {
   final Dio _dio;
   String _baseUrl = 'https://de1.api.radio-browser.info'; // Default fallback

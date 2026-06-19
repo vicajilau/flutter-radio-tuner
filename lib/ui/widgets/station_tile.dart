@@ -6,6 +6,9 @@ import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
+/// List tile widget representing a radio station in list views.
+/// Renders favicon, title, tags, country code, votes count,
+/// favorite toggle button, and a mini active visualizer bar if playing.
 class StationTile extends StatelessWidget {
   final Station station;
 
@@ -228,6 +231,7 @@ class StationTile extends StatelessWidget {
   }
 }
 
+/// Internal widget to animate a single vertical equalizer frequency bar.
 class _EqualizerBarAnimation extends StatefulWidget {
   final double maxHeight;
   final Duration duration;
@@ -241,6 +245,7 @@ class _EqualizerBarAnimation extends StatefulWidget {
   State<_EqualizerBarAnimation> createState() => _EqualizerBarAnimationState();
 }
 
+/// State management for the single equalizer frequency bar animation controller.
 class _EqualizerBarAnimationState extends State<_EqualizerBarAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;

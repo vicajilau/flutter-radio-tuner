@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/station_model.dart';
 
+/// Interface for the favorites local storage service.
+/// Declares methods to retrieve, add, remove, and check favorite radio stations.
 abstract class FavoritesService {
   Future<List<Station>> getFavorites();
   Future<bool> isFavorite(String stationuuid);
@@ -9,6 +11,8 @@ abstract class FavoritesService {
   Future<void> removeFavorite(String stationuuid);
 }
 
+/// SharedPreferences-backed implementation of [FavoritesService]
+/// for persistent storage of user's favorite radio stations.
 class SharedPreferencesFavoritesService implements FavoritesService {
   static const String _favoritesKey = 'favorite_stations';
 

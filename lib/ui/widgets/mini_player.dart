@@ -6,6 +6,9 @@ import '../../core/theme/app_theme.dart';
 import '../screens/player_screen.dart';
 import 'glass_container.dart';
 
+/// Persistent mini player widget displayed at the bottom of the home screen.
+/// Provides access to quick playback controls (play/pause, favorite toggle)
+/// and displays the current station name with a sliding transition to the full player.
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 

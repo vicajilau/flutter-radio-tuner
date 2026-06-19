@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+/// Reusable glassmorphic UI container applying backdrop blur filter effects
+/// and semi-transparent borders for modern design aesthetics.
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double blur;

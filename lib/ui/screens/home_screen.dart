@@ -11,6 +11,8 @@ import '../widgets/history_tile.dart';
 import '../widgets/genre_selector.dart';
 import '../widgets/station_shimmer.dart';
 
+/// Main landing screen of the application containing the dashboard,
+/// search bar, popular genres, recently played list, and stations list.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,6 +20,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// State management for [HomeScreen] that handles focus and input controllers.
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();

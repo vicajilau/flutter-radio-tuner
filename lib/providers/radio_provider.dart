@@ -8,6 +8,8 @@ import 'package:just_audio_background/just_audio_background.dart';
 import '../../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
+/// ChangeNotifier that manages the application state for radio playback,
+/// volume level control, sleep timer scheduler, search filters, and recent history.
 class RadioProvider with ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final StationRepository _repository;

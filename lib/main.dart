@@ -13,11 +13,14 @@ import 'ui/screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AudioInitializer.initialize();
-  runApp(const MyApp());
+  runApp(const RadioApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// The main entry point class of the application (RadioApp).
+/// Configures the dependency injection tree, initializes state providers,
+/// and defines the visual theme and the initial screen of the app.
+class RadioApp extends StatelessWidget {
+  const RadioApp({super.key});
 
   @override
   Widget build(BuildContext context) {

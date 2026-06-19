@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 
+/// Horizontal list widget for browsing and filtering radio stations by popular genres.
+/// Displays interactive chips indicating selection states.
 class GenreSelector extends StatelessWidget {
   final RadioProvider radioProvider;
 

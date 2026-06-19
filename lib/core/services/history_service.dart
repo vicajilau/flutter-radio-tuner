@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/station_model.dart';
 
+/// Interface for the playback history service.
+/// Declares methods to retrieve, add, and clear recently played stations.
 abstract class HistoryService {
   Future<List<Station>> getHistory();
   Future<void> addHistory(Station station);
   Future<void> clearHistory();
 }
 
+/// SharedPreferences-backed implementation of [HistoryService]
+/// for persistent storage of user's recently played radio stations.
 class SharedPreferencesHistoryService implements HistoryService {
   static const String _historyKey = 'played_history_stations';
   static const int _maxHistoryCount = 15;

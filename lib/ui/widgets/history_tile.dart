@@ -4,6 +4,8 @@ import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
+/// List item / card widget displaying a recently played radio station in a compact format.
+/// Features a leading logo, station title, codec info, and handles tap to resume playback.
 class HistoryTile extends StatelessWidget {
   final Station station;
   final RadioProvider radioProvider;

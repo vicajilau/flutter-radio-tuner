@@ -8,6 +8,9 @@ import '../widgets/visualizer.dart';
 import '../widgets/sleep_timer_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Detailed audio player screen displaying album art/station favicon,
+/// buffering loaders, real-time waveform visualizer, sleep timer trigger,
+/// volume slider, and sharing capabilities.
 class PlayerScreen extends StatelessWidget {
   const PlayerScreen({super.key});
 

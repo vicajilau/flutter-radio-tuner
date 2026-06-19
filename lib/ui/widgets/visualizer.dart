@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
+/// Animated widget displaying wave visualizers indicating whether audio is playing.
 class Visualizer extends StatefulWidget {
   final bool isPlaying;
   final double height;
@@ -18,6 +19,7 @@ class Visualizer extends StatefulWidget {
   State<Visualizer> createState() => _VisualizerState();
 }
 
+/// State management for the [Visualizer] repeating animation loop controller.
 class _VisualizerState extends State<Visualizer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
@@ -70,6 +72,8 @@ class _VisualizerState extends State<Visualizer>
   }
 }
 
+/// Custom painter that draws multiple layered, glowing sine waves
+/// representing dynamic frequency audio levels.
 class WaveformPainter extends CustomPainter {
   final double animationValue;
   final bool isPlaying;
@@ -176,6 +180,7 @@ class WaveformPainter extends CustomPainter {
   }
 }
 
+/// Internal data model parameterizing a single sine wave's height, density, and speed.
 class _WaveParam {
   final double amplitude;
   final double frequency;

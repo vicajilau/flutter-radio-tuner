@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Central design system class that defines colors, gradients,
+/// typography (Outfit & Inter), and dark theme configurations.
 class AppTheme {
   // Premium Color Palette
   static const Color background = Color(0xFF070A0F);
