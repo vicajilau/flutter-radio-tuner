@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:audio_session/audio_session.dart';
 import '../../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
@@ -237,6 +238,10 @@ class RadioProvider with ChangeNotifier {
     loadHistory(); // Reload history from SharedPreferences
 
     try {
+      // Activate audio session explicitly for background / lockscreen registration
+      final session = await AudioSession.instance;
+      await session.setActive(true);
+
       // Keep player internal volume matching system volume
       await _player.setVolume(_volume);
 
@@ -246,6 +251,8 @@ class RadioProvider with ChangeNotifier {
           : station.url;
 
       developer.log('Loading live radio stream: $streamUrl');
+
+      // Set audio source (buffers the stream)
       await _player.setAudioSource(
         AudioSource.uri(
           Uri.parse(streamUrl),
@@ -260,13 +267,14 @@ class RadioProvider with ChangeNotifier {
         ),
       );
 
-      // Auto-play
+      // Start playback
       _player.play();
     } catch (e) {
       developer.log('Error playing stream: $e');
       _errorMessage = 'Unable to play this station. The stream may be offline.';
       _isBuffering = false;
       _isPlaying = false;
+      await _player.stop(); // Stop player to clear notification state
       notifyListeners();
     }
   }
