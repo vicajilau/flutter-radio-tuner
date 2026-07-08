@@ -50,9 +50,9 @@ class PlayerScreen extends StatelessWidget {
           ),
           // Glow effect in the center
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
-            left: MediaQuery.of(context).size.width * 0.1,
-            right: MediaQuery.of(context).size.width * 0.1,
+            top: MediaQuery.sizeOf(context).height * 0.25,
+            left: MediaQuery.sizeOf(context).width * 0.1,
+            right: MediaQuery.sizeOf(context).width * 0.1,
             child: Container(
               height: 300,
               decoration: BoxDecoration(
