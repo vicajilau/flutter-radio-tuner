@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/station_model.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
@@ -9,18 +10,16 @@ import 'glass_container.dart';
 /// to trigger instant audio playback.
 class FavoriteCard extends StatelessWidget {
   final Station station;
-  final RadioProvider radioProvider;
 
-  const FavoriteCard({
-    super.key,
-    required this.station,
-    required this.radioProvider,
-  });
+  const FavoriteCard({super.key, required this.station});
 
   @override
   Widget build(BuildContext context) {
-    final bool isCurrent =
-        radioProvider.currentStation?.stationuuid == station.stationuuid;
+    debugPrint("Building FavoriteCard");
+    final bool isCurrent = context.select<RadioProvider, bool>(
+      (p) => p.currentStation?.stationuuid == station.stationuuid,
+    );
+    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
 
     return Padding(
       padding: const EdgeInsets.only(right: 14.0),

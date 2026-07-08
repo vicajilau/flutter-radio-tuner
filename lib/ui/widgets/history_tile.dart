@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/station_model.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
@@ -8,18 +9,16 @@ import 'glass_container.dart';
 /// Features a leading logo, station title, codec info, and handles tap to resume playback.
 class HistoryTile extends StatelessWidget {
   final Station station;
-  final RadioProvider radioProvider;
 
-  const HistoryTile({
-    super.key,
-    required this.station,
-    required this.radioProvider,
-  });
+  const HistoryTile({super.key, required this.station});
 
   @override
   Widget build(BuildContext context) {
-    final bool isCurrent =
-        radioProvider.currentStation?.stationuuid == station.stationuuid;
+    debugPrint("Building HistoryTile");
+    final bool isCurrent = context.select<RadioProvider, bool>(
+      (p) => p.currentStation?.stationuuid == station.stationuuid,
+    );
+    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
 
     return Padding(
       padding: const EdgeInsets.only(right: 12.0),

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 
 /// Horizontal list widget for browsing and filtering radio stations by popular genres.
 /// Displays interactive chips indicating selection states.
 class GenreSelector extends StatelessWidget {
-  final RadioProvider radioProvider;
-
-  const GenreSelector({super.key, required this.radioProvider});
+  const GenreSelector({super.key});
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("Building GenreSelector");
+    final tags = context.select<RadioProvider, List<String>>((p) => p.tags);
+    final selectedTag = context.select<RadioProvider, String>(
+      (p) => p.selectedTag,
+    );
+    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -31,10 +37,10 @@ class GenreSelector extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: radioProvider.tags.length,
+            itemCount: tags.length,
             itemBuilder: (context, index) {
-              final tag = radioProvider.tags[index];
-              final isSelected = radioProvider.selectedTag == tag;
+              final tag = tags[index];
+              final isSelected = selectedTag == tag;
 
               return Padding(
                 padding: const EdgeInsets.only(right: 10.0),
