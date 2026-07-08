@@ -20,14 +20,14 @@ class GenreSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, 10),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
           child: Text(
             'Popular Genres',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: context.colors.textPrimary,
             ),
           ),
         ),
@@ -52,15 +52,19 @@ class GenreSelector extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppTheme.primaryGradient : null,
+                      gradient: isSelected
+                          ? context.colors.primaryGradient
+                          : null,
                       color: isSelected
                           ? null
-                          : Colors.white.withValues(alpha: 0.04),
+                          : context.colors.textPrimary.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
                             ? Colors.transparent
-                            : Colors.white.withValues(alpha: 0.05),
+                            : context.colors.textPrimary.withValues(
+                                alpha: 0.05,
+                              ),
                       ),
                     ),
                     child: Text(
@@ -70,7 +74,7 @@ class GenreSelector extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: isSelected
                             ? Colors.white
-                            : AppTheme.textSecondary,
+                            : context.colors.textSecondary,
                         letterSpacing: 0.5,
                       ),
                     ),

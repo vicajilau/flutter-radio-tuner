@@ -44,7 +44,8 @@ class RadioApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Labhouse FM',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
         home: const SplashScreen(),
       ),
     );

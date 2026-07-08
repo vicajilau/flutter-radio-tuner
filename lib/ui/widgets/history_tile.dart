@@ -30,7 +30,7 @@ class HistoryTile extends StatelessWidget {
           opacity: isCurrent ? 0.12 : 0.04,
           border: isCurrent
               ? Border.all(
-                  color: AppTheme.primaryStart.withValues(alpha: 0.3),
+                  color: context.colors.primaryStart.withValues(alpha: 0.3),
                   width: 1.0,
                 )
               : null,
@@ -47,12 +47,14 @@ class HistoryTile extends StatelessWidget {
                     return Container(
                       width: 36,
                       height: 36,
-                      color: AppTheme.surfaceLight,
-                      child: const Center(
+                      color: context.colors.surfaceLight,
+                      child: Center(
                         child: Icon(
                           Icons.radio,
                           size: 16,
-                          color: Colors.white38,
+                          color: context.colors.textSecondary.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     );
@@ -67,10 +69,10 @@ class HistoryTile extends StatelessWidget {
                   children: [
                     Text(
                       station.name.trim(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -78,9 +80,9 @@ class HistoryTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       station.codec,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: AppTheme.textSecondary,
+                        color: context.colors.textSecondary,
                       ),
                     ),
                   ],

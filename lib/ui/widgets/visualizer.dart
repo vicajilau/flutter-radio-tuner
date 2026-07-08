@@ -57,6 +57,7 @@ class _VisualizerState extends State<Visualizer>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -65,6 +66,9 @@ class _VisualizerState extends State<Visualizer>
           painter: WaveformPainter(
             animationValue: _controller.value,
             isPlaying: widget.isPlaying,
+            primaryStart: colors.primaryStart,
+            primaryEnd: colors.primaryEnd,
+            secondary: colors.secondary,
           ),
         );
       },
@@ -77,8 +81,17 @@ class _VisualizerState extends State<Visualizer>
 class WaveformPainter extends CustomPainter {
   final double animationValue;
   final bool isPlaying;
+  final Color primaryStart;
+  final Color primaryEnd;
+  final Color secondary;
 
-  WaveformPainter({required this.animationValue, required this.isPlaying});
+  WaveformPainter({
+    required this.animationValue,
+    required this.isPlaying,
+    required this.primaryStart,
+    required this.primaryEnd,
+    required this.secondary,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -87,14 +100,14 @@ class WaveformPainter extends CustomPainter {
 
     // Draw background subtle glow
     final Paint glowPaint = Paint()
-      ..color = AppTheme.primaryStart.withValues(alpha: 0.02)
+      ..color = primaryStart.withValues(alpha: 0.02)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), glowPaint);
 
     // If not playing, draw a simple straight line with tiny noise
     if (!isPlaying) {
       final Paint flatPaint = Paint()
-        ..color = AppTheme.primaryStart.withValues(alpha: 0.3)
+        ..color = primaryStart.withValues(alpha: 0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
 
@@ -114,21 +127,21 @@ class WaveformPainter extends CustomPainter {
         amplitude: size.height * 0.28,
         frequency: 0.025,
         phaseShift: animationValue * 2 * math.pi * 2,
-        color: AppTheme.primaryStart.withValues(alpha: 0.7),
+        color: primaryStart.withValues(alpha: 0.7),
         strokeWidth: 2.5,
       ),
       _WaveParam(
         amplitude: size.height * 0.20,
         frequency: 0.038,
         phaseShift: -animationValue * 2 * math.pi * 1.5 + 1.0,
-        color: AppTheme.primaryEnd.withValues(alpha: 0.5),
+        color: primaryEnd.withValues(alpha: 0.5),
         strokeWidth: 2.0,
       ),
       _WaveParam(
         amplitude: size.height * 0.15,
         frequency: 0.052,
         phaseShift: animationValue * 2 * math.pi * 1.0 + 2.5,
-        color: AppTheme.secondary.withValues(alpha: 0.4),
+        color: secondary.withValues(alpha: 0.4),
         strokeWidth: 1.5,
       ),
     ];
@@ -176,7 +189,10 @@ class WaveformPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant WaveformPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue ||
-        oldDelegate.isPlaying != isPlaying;
+        oldDelegate.isPlaying != isPlaying ||
+        oldDelegate.primaryStart != primaryStart ||
+        oldDelegate.primaryEnd != primaryEnd ||
+        oldDelegate.secondary != secondary;
   }
 }
 

@@ -16,14 +16,23 @@ class StationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radioProvider = Provider.of<RadioProvider>(context);
-    final favoritesProvider = Provider.of<FavoritesProvider>(context);
-
-    final bool isCurrent =
-        radioProvider.currentStation?.stationuuid == station.stationuuid;
-    final bool isPlaying = isCurrent && radioProvider.isPlaying;
-    final bool isBuffering = isCurrent && radioProvider.isBuffering;
-    final bool isFavorited = favoritesProvider.isFavorite(station.stationuuid);
+    final bool isCurrent = context.select<RadioProvider, bool>(
+      (p) => p.currentStation?.stationuuid == station.stationuuid,
+    );
+    final bool isPlaying = context.select<RadioProvider, bool>(
+      (p) => isCurrent && p.isPlaying,
+    );
+    final bool isBuffering = context.select<RadioProvider, bool>(
+      (p) => isCurrent && p.isBuffering,
+    );
+    final bool isFavorited = context.select<FavoritesProvider, bool>(
+      (p) => p.isFavorite(station.stationuuid),
+    );
+    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
+    final favoritesProvider = Provider.of<FavoritesProvider>(
+      context,
+      listen: false,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
@@ -35,7 +44,7 @@ class StationTile extends StatelessWidget {
           borderOpacity: isCurrent ? 0.25 : 0.08,
           border: isCurrent
               ? Border.all(
-                  color: AppTheme.primaryStart.withValues(alpha: 0.5),
+                  color: context.colors.primaryStart.withValues(alpha: 0.5),
                   width: 1.5,
                 )
               : null,
@@ -49,18 +58,18 @@ class StationTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
                     colors: [
-                      AppTheme.surfaceLight,
+                      context.colors.surfaceLight,
                       isCurrent
-                          ? AppTheme.primaryStart.withValues(alpha: 0.3)
-                          : AppTheme.surface,
+                          ? context.colors.primaryStart.withValues(alpha: 0.3)
+                          : context.colors.surface,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   border: Border.all(
                     color: isCurrent
-                        ? AppTheme.primaryStart.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.05),
+                        ? context.colors.primaryStart.withValues(alpha: 0.3)
+                        : context.colors.textPrimary.withValues(alpha: 0.05),
                   ),
                 ),
                 child: ClipRRect(
@@ -78,8 +87,8 @@ class StationTile extends StatelessWidget {
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: isCurrent
-                                ? AppTheme.primaryStart
-                                : Colors.white60,
+                                ? context.colors.primaryStart
+                                : context.colors.textSecondary,
                           ),
                         ),
                       );
@@ -98,8 +107,8 @@ class StationTile extends StatelessWidget {
                       station.name.trim(),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: isCurrent
-                            ? AppTheme.primaryStart
-                            : AppTheme.textPrimary,
+                            ? context.colors.primaryStart
+                            : context.colors.textPrimary,
                         fontWeight: isCurrent
                             ? FontWeight.bold
                             : FontWeight.w600,
@@ -116,8 +125,8 @@ class StationTile extends StatelessWidget {
                       ].join(' • '),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: isCurrent
-                            ? Colors.white70
-                            : AppTheme.textSecondary,
+                            ? context.colors.textPrimary.withValues(alpha: 0.7)
+                            : context.colors.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -139,17 +148,21 @@ class StationTile extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: isCurrent
-                                    ? AppTheme.primaryStart.withValues(
+                                    ? context.colors.primaryStart.withValues(
                                         alpha: 0.15,
                                       )
-                                    : Colors.white.withValues(alpha: 0.05),
+                                    : context.colors.textPrimary.withValues(
+                                        alpha: 0.05,
+                                      ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 station.tagList[index].toLowerCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.white70,
+                                  color: context.colors.textPrimary.withValues(
+                                    alpha: 0.7,
+                                  ),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -169,22 +182,22 @@ class StationTile extends StatelessWidget {
                   // Play / Loading status icon
                   if (isCurrent) ...[
                     if (isBuffering)
-                      const SizedBox(
+                      SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.primaryStart,
+                            context.colors.primaryStart,
                           ),
                         ),
                       )
                     else if (isPlaying)
-                      _buildEqualizerIndicator()
+                      _buildEqualizerIndicator(context)
                     else
-                      const Icon(
+                      Icon(
                         Icons.pause_circle_outline,
-                        color: AppTheme.primaryStart,
+                        color: context.colors.primaryStart,
                         size: 24,
                       ),
                     const SizedBox(width: 12),
@@ -194,7 +207,9 @@ class StationTile extends StatelessWidget {
                   IconButton(
                     icon: Icon(
                       isFavorited ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorited ? Colors.redAccent : Colors.white38,
+                      color: isFavorited
+                          ? Colors.redAccent
+                          : context.colors.textMuted,
                       size: 22,
                     ),
                     onPressed: () => favoritesProvider.toggleFavorite(station),
@@ -211,22 +226,26 @@ class StationTile extends StatelessWidget {
     );
   }
 
-  Widget _buildEqualizerIndicator() {
+  Widget _buildEqualizerIndicator(BuildContext context) {
     return SizedBox(
       width: 16,
       height: 16,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildEqualizerBar(5.0, const Duration(milliseconds: 500)),
-          _buildEqualizerBar(12.0, const Duration(milliseconds: 400)),
-          _buildEqualizerBar(8.0, const Duration(milliseconds: 600)),
+          _buildEqualizerBar(context, 5.0, const Duration(milliseconds: 500)),
+          _buildEqualizerBar(context, 12.0, const Duration(milliseconds: 400)),
+          _buildEqualizerBar(context, 8.0, const Duration(milliseconds: 600)),
         ],
       ),
     );
   }
 
-  Widget _buildEqualizerBar(double height, Duration duration) {
+  Widget _buildEqualizerBar(
+    BuildContext context,
+    double height,
+    Duration duration,
+  ) {
     return _EqualizerBarAnimation(maxHeight: height, duration: duration);
   }
 }
@@ -279,7 +298,7 @@ class _EqualizerBarAnimationState extends State<_EqualizerBarAnimation>
           width: 3.5,
           height: _animation.value,
           decoration: BoxDecoration(
-            color: AppTheme.primaryStart,
+            color: context.colors.primaryStart,
             borderRadius: BorderRadius.circular(2),
           ),
         );

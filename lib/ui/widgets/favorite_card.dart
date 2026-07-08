@@ -31,7 +31,7 @@ class FavoriteCard extends StatelessWidget {
           opacity: isCurrent ? 0.15 : 0.04,
           border: isCurrent
               ? Border.all(
-                  color: AppTheme.primaryStart.withValues(alpha: 0.4),
+                  color: context.colors.primaryStart.withValues(alpha: 0.4),
                   width: 1.5,
                 )
               : null,
@@ -44,7 +44,7 @@ class FavoriteCard extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: AppTheme.surfaceLight,
+                    color: context.colors.surfaceLight,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -57,10 +57,12 @@ class FavoriteCard extends StatelessWidget {
                             station.name.isNotEmpty
                                 ? station.name[0].toUpperCase()
                                 : 'R',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white54,
+                              color: context.colors.textSecondary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         );
@@ -73,10 +75,10 @@ class FavoriteCard extends StatelessWidget {
               // Title
               Text(
                 station.name.trim(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: context.colors.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -85,9 +87,9 @@ class FavoriteCard extends StatelessWidget {
               // Subtitle
               Text(
                 station.country.isNotEmpty ? station.country : 'Global',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: AppTheme.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

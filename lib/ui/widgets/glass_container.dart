@@ -33,6 +33,21 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Premium light/dark adaptive color schemes
+    final Color dynamicCardColor = isDark
+        ? Colors.white.withValues(alpha: opacity)
+        : Colors.white.withValues(alpha: 0.80);
+
+    final Color dynamicBorderColor = isDark
+        ? Colors.white.withValues(alpha: borderOpacity)
+        : Colors.black.withValues(alpha: 0.06);
+
+    final Color dynamicShadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.15)
+        : Colors.black.withValues(alpha: 0.04);
+
     return Container(
       width: width,
       height: height,
@@ -42,7 +57,7 @@ class GlassContainer extends StatelessWidget {
         borderRadius: shape == BoxShape.circle ? null : borderRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: dynamicShadowColor,
             blurRadius: 24,
             spreadRadius: -4,
             offset: const Offset(0, 12),
@@ -59,14 +74,10 @@ class GlassContainer extends StatelessWidget {
             padding: padding,
             decoration: BoxDecoration(
               shape: shape,
-              color: Colors.white.withValues(alpha: opacity),
+              color: dynamicCardColor,
               borderRadius: shape == BoxShape.circle ? null : borderRadius,
               border:
-                  border ??
-                  Border.all(
-                    color: Colors.white.withValues(alpha: borderOpacity),
-                    width: 1.0,
-                  ),
+                  border ?? Border.all(color: dynamicBorderColor, width: 1.0),
             ),
             child: child,
           ),

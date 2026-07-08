@@ -290,6 +290,16 @@ class RadioProvider with ChangeNotifier {
     }
   }
 
+  /// Stop playback, cancel sleep timers, and clear active station
+  Future<void> stopRadio() async {
+    _isBuffering = false;
+    _isPlaying = false;
+    cancelSleepTimer();
+    _currentStation = null;
+    await _player.stop();
+    notifyListeners();
+  }
+
   /// Initialize system volume listener and configuration
   Future<void> _initVolumeController() async {
     final bool isTest =

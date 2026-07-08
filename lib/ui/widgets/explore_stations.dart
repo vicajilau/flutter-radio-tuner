@@ -32,18 +32,18 @@ class ExploreSectionTitle extends StatelessWidget {
               children: [
                 Text(
                   hasFilter ? 'Search Results' : 'Recommended Stations',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 if (hasFilter)
                   TextButton(
                     onPressed: onReset,
-                    child: const Text(
+                    child: Text(
                       'Reset',
-                      style: TextStyle(color: AppTheme.primaryStart),
+                      style: TextStyle(color: context.colors.primaryStart),
                     ),
                   ),
               ],
@@ -102,7 +102,7 @@ class ExploreStationsList extends StatelessWidget {
                       ? Icons.wifi_off_rounded
                       : Icons.search_off_rounded,
                   size: 56,
-                  color: AppTheme.textMuted,
+                  color: context.colors.textMuted,
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -122,7 +122,7 @@ class ExploreStationsList extends StatelessWidget {
                           : 'No stations available right now.'),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: context.colors.textSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -136,11 +136,13 @@ class ExploreStationsList extends StatelessWidget {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
+                        gradient: context.colors.primaryGradient,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryStart.withValues(alpha: 0.3),
+                            color: context.colors.primaryStart.withValues(
+                              alpha: 0.3,
+                            ),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -176,25 +178,29 @@ class ExploreStationsList extends StatelessWidget {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: context.colors.textPrimary.withValues(
+                          alpha: 0.06,
+                        ),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: context.colors.textPrimary.withValues(
+                            alpha: 0.1,
+                          ),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.clear_all_rounded,
-                            color: Colors.white,
+                            color: context.colors.textPrimary,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Clear Search & Filters',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
