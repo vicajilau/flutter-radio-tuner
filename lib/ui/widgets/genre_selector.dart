@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 
 /// Horizontal list widget for browsing and filtering radio stations by popular genres.
 /// Displays interactive chips indicating selection states.
@@ -23,7 +24,7 @@ class GenreSelector extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
           child: Text(
-            'Popular Genres',
+            context.l10n.popularGenres,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import 'glass_container.dart';
 
 /// Bottom sheet widget allowing users to select or cancel a sleep timer duration.
@@ -33,7 +34,7 @@ class SleepTimerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'SLEEP TIMER',
+            context.l10n.sleepTimer,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               letterSpacing: 2.0,
               fontWeight: FontWeight.bold,
@@ -42,7 +43,7 @@ class SleepTimerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Automatically stop playback after duration',
+            context.l10n.sleepTimerSubtitle,
             style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 24),
@@ -51,7 +52,7 @@ class SleepTimerSheet extends StatelessWidget {
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _timerOption(context, 'Cancel', null, radioProvider),
+              _timerOption(context, context.l10n.cancel, null, radioProvider),
               _timerOption(
                 context,
                 '5m',

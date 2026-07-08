@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import '../../models/station_model.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/mini_player.dart';
@@ -158,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           style: TextStyle(color: context.colors.textPrimary),
                           decoration: InputDecoration(
-                            hintText: 'Search stations, genres, tags...',
+                            hintText: context.l10n.searchPlaceholder,
                             hintStyle: TextStyle(
                               color: context.colors.textMuted,
                             ),
@@ -217,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 12,
                               ),
                               child: Text(
-                                'Favorite Stations',
+                                context.l10n.favoriteStations,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -269,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Recently Played',
+                                    context.l10n.recentlyPlayed,
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,

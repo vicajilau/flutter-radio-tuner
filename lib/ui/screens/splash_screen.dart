@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import 'home_screen.dart';
 
 /// Animated entry point screen of the application.
@@ -208,7 +209,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'P R E M I U M   R A D I O   T U N E R',
+                          context.l10n.appTagline,
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 fontSize: 10,
@@ -240,7 +241,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Resolving radio nodes...',
+                      context.l10n.resolvingNodes,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 11,
                         color: context.colors.textMuted,

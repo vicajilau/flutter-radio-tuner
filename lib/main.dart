@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_radio_tuner/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/services/audio_initializer.dart';
 import 'core/theme/app_theme.dart';
@@ -46,6 +47,8 @@ class RadioApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const SplashScreen(),
       ),
     );

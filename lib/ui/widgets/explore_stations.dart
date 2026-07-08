@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import '../../models/station_model.dart';
 import 'station_tile.dart';
 import 'station_shimmer.dart';
@@ -31,7 +32,9 @@ class ExploreSectionTitle extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  hasFilter ? 'Search Results' : 'Recommended Stations',
+                  hasFilter
+                      ? context.l10n.searchResults
+                      : context.l10n.recommendedStations,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -42,7 +45,7 @@ class ExploreSectionTitle extends StatelessWidget {
                   TextButton(
                     onPressed: onReset,
                     child: Text(
-                      'Reset',
+                      context.l10n.reset,
                       style: TextStyle(color: context.colors.primaryStart),
                     ),
                   ),
@@ -107,8 +110,8 @@ class ExploreStationsList extends StatelessWidget {
                 const SizedBox(height: 20),
                 Text(
                   errorMessage != null
-                      ? 'Connection Error'
-                      : 'No Stations Found',
+                      ? context.l10n.connectionError
+                      : context.l10n.noStationsFound,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -118,8 +121,8 @@ class ExploreStationsList extends StatelessWidget {
                 Text(
                   errorMessage ??
                       (searchQuery.isNotEmpty
-                          ? 'Try searching for a different name, genre, or tag.'
-                          : 'No stations available right now.'),
+                          ? context.l10n.searchEmptySubtitle
+                          : context.l10n.noStationsAvailable),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: context.colors.textSecondary,
@@ -148,18 +151,18 @@ class ExploreStationsList extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.refresh_rounded,
                             color: Colors.white,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'Retry Connection',
-                            style: TextStyle(
+                            context.l10n.retryConnection,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -198,7 +201,7 @@ class ExploreStationsList extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Clear Search & Filters',
+                            context.l10n.clearSearchAndFilters,
                             style: TextStyle(
                               color: context.colors.textPrimary,
                               fontWeight: FontWeight.bold,

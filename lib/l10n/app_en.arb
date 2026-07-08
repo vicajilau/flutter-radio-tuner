@@ -1,0 +1,179 @@
+{
+  "@@locale": "en",
+  "searchPlaceholder": "Search stations, genres, tags...",
+  "@searchPlaceholder": {
+    "description": "Placeholder text for the search input field on the home screen"
+  },
+  "popularGenres": "Popular Genres",
+  "@popularGenres": {
+    "description": "Header for popular genres category list"
+  },
+  "favoriteStations": "Favorite Stations",
+  "@favoriteStations": {
+    "description": "Header for favorited radio stations list"
+  },
+  "recentlyPlayed": "Recently Played",
+  "@recentlyPlayed": {
+    "description": "Header for recently played history list"
+  },
+  "recommendedStations": "Recommended Stations",
+  "@recommendedStations": {
+    "description": "Header for recommended stations list"
+  },
+  "searchResults": "Search Results",
+  "@searchResults": {
+    "description": "Header showing search query results"
+  },
+  "selectGenreToExplore": "Select a genre to start exploring",
+  "@selectGenreToExplore": {
+    "description": "Empty state subtitle when no genre or search is selected"
+  },
+  "noFavoritesYet": "No favorite stations yet",
+  "@noFavoritesYet": {
+    "description": "Title shown when the user has no favorited stations"
+  },
+  "favoritesSubtitle": "Your favorite stations will appear here",
+  "@favoritesSubtitle": {
+    "description": "Subtitle shown when the user has no favorited stations"
+  },
+  "noRecentlyPlayed": "No recently played stations",
+  "@noRecentlyPlayed": {
+    "description": "Title shown when the history list is empty"
+  },
+  "recentlyPlayedSubtitle": "Stations you listen to will appear here",
+  "@recentlyPlayedSubtitle": {
+    "description": "Subtitle shown when the history list is empty"
+  },
+  "noRecommended": "No recommended stations",
+  "@noRecommended": {
+    "description": "Title shown when no recommended stations are found"
+  },
+  "recommendedSubtitle": "Check back later for recommendations",
+  "@recommendedSubtitle": {
+    "description": "Subtitle shown when no recommended stations are found"
+  },
+  "nowStreaming": "NOW STREAMING",
+  "@nowStreaming": {
+    "description": "Header title of the player screen"
+  },
+  "noStationSelected": "No station selected.",
+  "@noStationSelected": {
+    "description": "Text shown if the player is opened with no active station"
+  },
+  "sleepIn": "Sleep in {time}",
+  "@sleepIn": {
+    "description": "Status text showing remaining sleep timer duration",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "noWebsite": "No website available for this station.",
+  "@noWebsite": {
+    "description": "Toast message when the homepage url is empty"
+  },
+  "invalidWebsite": "Invalid station website URL.",
+  "@invalidWebsite": {
+    "description": "Toast message when the homepage URL parsing fails"
+  },
+  "couldNotOpen": "Could not open: {url}",
+  "@couldNotOpen": {
+    "description": "Toast message when the system fails to open the browser",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "clearSearchAndFilters": "Clear Search & Filters",
+  "@clearSearchAndFilters": {
+    "description": "Button text to clear active search query and tags"
+  },
+  "noStationsFoundForQuery": "No stations found matching \"{query}\"",
+  "@noStationsFoundForQuery": {
+    "description": "Empty state query match text",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "noStationsFoundForCategory": "No stations found in category \"{tag}\"",
+  "@noStationsFoundForCategory": {
+    "description": "Empty state category match text",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "noStationsFoundForFilters": "No stations found matching the current filters",
+  "@noStationsFoundForFilters": {
+    "description": "Empty state general text when query and tag are empty but list is empty"
+  },
+  "sleepTimer": "SLEEP TIMER",
+  "@sleepTimer": {
+    "description": "Title of the sleep timer configuration bottom sheet"
+  },
+  "sleepTimerSubtitle": "Automatically stop playback after duration",
+  "@sleepTimerSubtitle": {
+    "description": "Subtitle of the sleep timer configuration bottom sheet"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel option in sleep timer presets"
+  },
+  "connecting": "Connecting...",
+  "@connecting": {
+    "description": "Player loading state indicator"
+  },
+  "buffering": "Buffering...",
+  "@buffering": {
+    "description": "Player buffering state indicator"
+  },
+  "playingLive": "Playing Live",
+  "@playingLive": {
+    "description": "Player live playing status message"
+  },
+  "paused": "Paused",
+  "@paused": {
+    "description": "Player paused status message"
+  },
+  "bufferingStream": "Buffering stream...",
+  "@bufferingStream": {
+    "description": "Detailed buffering status message"
+  },
+  "resolvingNodes": "Resolving radio nodes...",
+  "@resolvingNodes": {
+    "description": "Splash screen loading status message"
+  },
+  "connectionError": "Connection Error",
+  "@connectionError": {
+    "description": "Error message when radio server is offline"
+  },
+  "noStationsFound": "No Stations Found",
+  "@noStationsFound": {
+    "description": "General empty state message when list is empty"
+  },
+  "searchEmptySubtitle": "Try searching for a different name, genre, or tag.",
+  "@searchEmptySubtitle": {
+    "description": "Subtitle encouraging user to change query"
+  },
+  "noStationsAvailable": "No stations available right now.",
+  "@noStationsAvailable": {
+    "description": "Subtitle when backend returns zero results"
+  },
+  "retryConnection": "Retry Connection",
+  "@retryConnection": {
+    "description": "Button to retry connecting to the radio server"
+  },
+  "reset": "Reset",
+  "@reset": {
+    "description": "Reset search text button"
+  },
+  "appTagline": "P R E M I U M   R A D I O   T U N E R",
+  "@appTagline": {
+    "description": "Slogan tagline of the application"
+  }
+}

@@ -5,6 +5,7 @@ import '../../models/station_model.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import '../widgets/visualizer.dart';
 import '../widgets/sleep_timer_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,8 +26,8 @@ class PlayerScreen extends StatelessWidget {
     // Fallback if no station is playing (shouldn't normally be reachable)
     if (station == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Now Playing')),
-        body: const Center(child: Text('No station selected.')),
+        appBar: AppBar(title: Text(context.l10n.nowStreaming)),
+        body: Center(child: Text(context.l10n.noStationSelected)),
       );
     }
 
@@ -123,7 +124,7 @@ class PlayerScreen extends StatelessWidget {
                                     onPressed: () => Navigator.pop(context),
                                   ),
                                   Text(
-                                    'NOW STREAMING',
+                                    context.l10n.nowStreaming,
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge
@@ -271,7 +272,9 @@ class PlayerScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Sleep in ${radioProvider.sleepTimeFormatted}',
+                                      context.l10n.sleepIn(
+                                        radioProvider.sleepTimeFormatted,
+                                      ),
                                       style: TextStyle(
                                         color: context.colors.secondary,
                                         fontSize: 12,
@@ -378,8 +381,8 @@ class PlayerScreen extends StatelessWidget {
                                             context,
                                           ).showSnackBar(
                                             SnackBar(
-                                              content: const Text(
-                                                'No website available for this station.',
+                                              content: Text(
+                                                context.l10n.noWebsite,
                                               ),
                                               backgroundColor:
                                                   context.colors.surfaceLight,
@@ -399,8 +402,8 @@ class PlayerScreen extends StatelessWidget {
                                             context,
                                           ).showSnackBar(
                                             SnackBar(
-                                              content: const Text(
-                                                'Invalid station website URL.',
+                                              content: Text(
+                                                context.l10n.invalidWebsite,
                                               ),
                                               backgroundColor:
                                                   context.colors.surfaceLight,
@@ -422,7 +425,9 @@ class PlayerScreen extends StatelessWidget {
                                           ).showSnackBar(
                                             SnackBar(
                                               content: Text(
-                                                'Could not open: $urlString',
+                                                context.l10n.couldNotOpen(
+                                                  urlString,
+                                                ),
                                               ),
                                               backgroundColor: Colors.redAccent,
                                             ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import '../screens/player_screen.dart';
 import 'glass_container.dart';
 
@@ -128,8 +129,8 @@ class MiniPlayer extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         isBuffering
-                            ? 'Buffering stream...'
-                            : '${isPlaying ? 'Playing Live' : 'Paused'}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}',
+                            ? context.l10n.bufferingStream
+                            : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 11,
                           color: isBuffering
