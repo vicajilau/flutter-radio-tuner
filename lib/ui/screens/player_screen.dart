@@ -133,26 +133,7 @@ class PlayerScreen extends StatelessWidget {
                                           fontWeight: FontWeight.bold,
                                         ),
                                   ),
-                                  IconButton(
-                                    icon: Icon(
-                                      radioProvider.isSleepTimerActive
-                                          ? Icons.alarm_on
-                                          : Icons.alarm_add_outlined,
-                                      color: radioProvider.isSleepTimerActive
-                                          ? context.colors.secondary
-                                          : context.colors.textPrimary
-                                                .withValues(alpha: 0.7),
-                                    ),
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) => SleepTimerSheet(
-                                          radioProvider: radioProvider,
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  const SizedBox(width: 48),
                                 ],
                               ),
                             ),
@@ -374,14 +355,14 @@ class PlayerScreen extends StatelessWidget {
                             // Main Playback Controls
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 48.0,
+                                horizontal: 24.0,
                                 vertical: 24.0,
                               ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Share / Web Page
+                                  // 1. Share / Web Page
                                   IconButton(
                                     icon: Icon(
                                       Icons.language,
@@ -451,7 +432,7 @@ class PlayerScreen extends StatelessWidget {
                                     },
                                   ),
 
-                                  // Stop Radio Button
+                                  // 2. Stop Button
                                   IconButton(
                                     icon: Icon(
                                       Icons.stop_rounded,
@@ -464,7 +445,7 @@ class PlayerScreen extends StatelessWidget {
                                     },
                                   ),
 
-                                  // Large Play/Pause Toggle
+                                  // 3. Center Large Play/Pause Toggle
                                   GestureDetector(
                                     onTap: () => radioProvider.togglePlay(),
                                     child: Container(
@@ -503,7 +484,7 @@ class PlayerScreen extends StatelessWidget {
                                     ),
                                   ),
 
-                                  // Favorite toggle
+                                  // 4. Favorite Toggle
                                   IconButton(
                                     icon: Icon(
                                       isFavorited
@@ -516,6 +497,28 @@ class PlayerScreen extends StatelessWidget {
                                     ),
                                     onPressed: () => favoritesProvider
                                         .toggleFavorite(station),
+                                  ),
+
+                                  // 5. Sleep Timer Button
+                                  IconButton(
+                                    icon: Icon(
+                                      radioProvider.isSleepTimerActive
+                                          ? Icons.alarm_on
+                                          : Icons.alarm_add_outlined,
+                                      color: radioProvider.isSleepTimerActive
+                                          ? context.colors.secondary
+                                          : context.colors.textSecondary,
+                                      size: 26,
+                                    ),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => SleepTimerSheet(
+                                          radioProvider: radioProvider,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
