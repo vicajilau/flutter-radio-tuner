@@ -135,4 +135,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTagline => 'P R E M I U M   R A D I O   T U N E R';
+
+  @override
+  String get streamWorldsMusic => 'Stream the world\'s music';
+
+  @override
+  String get appTitle => 'Radio Tuner';
 }

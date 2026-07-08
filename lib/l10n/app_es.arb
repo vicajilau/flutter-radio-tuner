@@ -66,5 +66,7 @@
   "noStationsAvailable": "No hay emisoras disponibles en este momento.",
   "retryConnection": "Reintentar conexión",
   "reset": "Restablecer",
-  "appTagline": "S I N T O N I Z A D O R   D E   R A D I O   P R E M I U M"
+  "appTagline": "S I N T O N I Z A D O R   D E   R A D I O   P R E M I U M",
+  "streamWorldsMusic": "Escucha la música del mundo",
+  "appTitle": "Sintonizador de Radio"
 }

@@ -331,6 +331,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'P R E M I U M   R A D I O   T U N E R'**
   String get appTagline;
+
+  /// Slogan displayed on the home page app bar header
+  ///
+  /// In en, this message translates to:
+  /// **'Stream the world\'s music'**
+  String get streamWorldsMusic;
+
+  /// The title of the application
+  ///
+  /// In en, this message translates to:
+  /// **'Radio Tuner'**
+  String get appTitle;
 }
 
 class _AppLocalizationsDelegate

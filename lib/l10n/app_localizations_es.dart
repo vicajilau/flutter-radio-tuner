@@ -139,4 +139,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get appTagline =>
       'S I N T O N I Z A D O R   D E   R A D I O   P R E M I U M';
+
+  @override
+  String get streamWorldsMusic => 'Escucha la música del mundo';
+
+  @override
+  String get appTitle => 'Sintonizador de Radio';
 }

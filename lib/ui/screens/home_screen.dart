@@ -106,13 +106,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Radio Tuner',
+                                context.l10n.appTitle,
                                 style: Theme.of(context).textTheme.displayLarge
                                     ?.copyWith(fontSize: 30),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Stream the world\'s music',
+                                context.l10n.streamWorldsMusic,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       color: context.colors.textSecondary,

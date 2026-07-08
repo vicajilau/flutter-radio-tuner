@@ -175,5 +175,13 @@
   "appTagline": "P R E M I U M   R A D I O   T U N E R",
   "@appTagline": {
     "description": "Slogan tagline of the application"
+  },
+  "streamWorldsMusic": "Stream the world's music",
+  "@streamWorldsMusic": {
+    "description": "Slogan displayed on the home page app bar header"
+  },
+  "appTitle": "Radio Tuner",
+  "@appTitle": {
+    "description": "The title of the application"
   }
 }
