@@ -159,7 +159,10 @@ class DioApiService implements ApiService {
 
   /// Get top clicked/popular radio stations.
   @override
-  Future<List<Station>> getTopStations({int limit = 40, bool forceRefresh = false}) async {
+  Future<List<Station>> getTopStations({
+    int limit = 40,
+    bool forceRefresh = false,
+  }) async {
     final cacheKey = 'top_stations_$limit';
     if (!forceRefresh) {
       if (_stationsCache.containsKey(cacheKey)) {
@@ -174,18 +177,18 @@ class DioApiService implements ApiService {
         cacheKey,
         _cacheDuration,
       );
-    if (persistentCachedData != null && persistentCachedData is List) {
-      debugPrint('Returning persistent cached top stations for limit $limit');
-      try {
-        final list = (persistentCachedData)
-            .map((json) => Station.fromJson(json as Map<String, dynamic>))
-            .toList();
-        _stationsCache[cacheKey] = _CacheEntry(list);
-        return list;
-      } catch (e) {
-        debugPrint('Failed to parse persistent cached top stations: $e');
+      if (persistentCachedData != null && persistentCachedData is List) {
+        debugPrint('Returning persistent cached top stations for limit $limit');
+        try {
+          final list = (persistentCachedData)
+              .map((json) => Station.fromJson(json as Map<String, dynamic>))
+              .toList();
+          _stationsCache[cacheKey] = _CacheEntry(list);
+          return list;
+        } catch (e) {
+          debugPrint('Failed to parse persistent cached top stations: $e');
+        }
       }
-    }
     }
 
     try {
@@ -280,7 +283,10 @@ class DioApiService implements ApiService {
 
   /// Fetch top tags/genres by station count.
   @override
-  Future<List<String>> getTopTags({int limit = 15, bool forceRefresh = false}) async {
+  Future<List<String>> getTopTags({
+    int limit = 15,
+    bool forceRefresh = false,
+  }) async {
     final cacheKey = 'top_tags_$limit';
     if (!forceRefresh) {
       if (_tagsCache.containsKey(cacheKey)) {
@@ -295,16 +301,16 @@ class DioApiService implements ApiService {
         cacheKey,
         _cacheDuration,
       );
-    if (persistentCachedData != null && persistentCachedData is List) {
-      debugPrint('Returning persistent cached top tags for limit $limit');
-      try {
-        final list = List<String>.from(persistentCachedData);
-        _tagsCache[cacheKey] = _CacheEntry(list);
-        return list;
-      } catch (e) {
-        debugPrint('Failed to parse persistent cached top tags: $e');
+      if (persistentCachedData != null && persistentCachedData is List) {
+        debugPrint('Returning persistent cached top tags for limit $limit');
+        try {
+          final list = List<String>.from(persistentCachedData);
+          _tagsCache[cacheKey] = _CacheEntry(list);
+          return list;
+        } catch (e) {
+          debugPrint('Failed to parse persistent cached top tags: $e');
+        }
       }
-    }
     }
 
     try {
