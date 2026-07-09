@@ -21,6 +21,16 @@ class MockStationRepository implements StationRepository {
   }
 
   @override
+  Future<List<Station>> getCachedPopularStations() async {
+    return popular;
+  }
+
+  @override
+  Future<List<String>> getCachedPopularTags() async {
+    return tags;
+  }
+
+  @override
   Future<List<Station>> getPopularStations() async {
     return popular;
   }

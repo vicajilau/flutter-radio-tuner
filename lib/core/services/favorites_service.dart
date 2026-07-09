@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/station_model.dart';
+import 'hive_service.dart';
 
 /// Interface for the favorites local storage service.
 /// Declares methods to retrieve, add, remove, and check favorite radio stations.
@@ -12,20 +12,18 @@ abstract class FavoritesService {
   Future<void> saveFavorites(List<Station> stations);
 }
 
-/// SharedPreferences-backed implementation of [FavoritesService]
+/// Hive-backed implementation of [FavoritesService]
 /// for persistent storage of user's favorite radio stations.
-class SharedPreferencesFavoritesService implements FavoritesService {
-  static const String _favoritesKey = 'favorite_stations';
+class HiveFavoritesService implements FavoritesService {
+  final HiveService _hiveService;
+
+  HiveFavoritesService(this._hiveService);
 
   /// Get the list of saved favorite stations.
   @override
   Future<List<Station>> getFavorites() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? favoritesJson = prefs.getStringList(_favoritesKey);
-
-    if (favoritesJson == null) return [];
-
-    return favoritesJson
+    return _hiveService
+        .getFavoritesValues()
         .map((jsonStr) {
           try {
             final Map<String, dynamic> decoded = jsonDecode(jsonStr);
@@ -41,39 +39,33 @@ class SharedPreferencesFavoritesService implements FavoritesService {
   /// Check if a station is in favorites.
   @override
   Future<bool> isFavorite(String stationuuid) async {
-    final favorites = await getFavorites();
-    return favorites.any((s) => s.stationuuid == stationuuid);
+    return _hiveService.favoritesContainKey(stationuuid);
   }
 
   /// Add a station to favorites.
   @override
   Future<void> addFavorite(Station station) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final favorites = await getFavorites();
-
-    if (!favorites.any((s) => s.stationuuid == station.stationuuid)) {
-      favorites.add(station);
-      final listJson = favorites.map((s) => jsonEncode(s.toJson())).toList();
-      await prefs.setStringList(_favoritesKey, listJson);
-    }
+    await _hiveService.putFavorite(
+      station.stationuuid,
+      jsonEncode(station.toJson()),
+    );
   }
 
   /// Remove a station from favorites.
   @override
   Future<void> removeFavorite(String stationuuid) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final favorites = await getFavorites();
-
-    favorites.removeWhere((s) => s.stationuuid == stationuuid);
-    final listJson = favorites.map((s) => jsonEncode(s.toJson())).toList();
-    await prefs.setStringList(_favoritesKey, listJson);
+    await _hiveService.deleteFavorite(stationuuid);
   }
 
   /// Save entire list of favorite stations to persist reordering.
   @override
   Future<void> saveFavorites(List<Station> stations) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final listJson = stations.map((s) => jsonEncode(s.toJson())).toList();
-    await prefs.setStringList(_favoritesKey, listJson);
+    await _hiveService.clearFavorites();
+    for (final station in stations) {
+      await _hiveService.putFavorite(
+        station.stationuuid,
+        jsonEncode(station.toJson()),
+      );
+    }
   }
 }

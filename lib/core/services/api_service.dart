@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../../models/station_model.dart';
+import 'hive_service.dart';
 
 /// Interface for the API service.
 /// Declares operations to communicate with the Radio Browser API,
@@ -17,6 +19,8 @@ abstract class ApiService {
   });
   Future<List<String>> getTopTags({int limit});
   Future<List<Map<String, String>>> getTopCountries({int limit});
+  Future<List<Station>> getCachedTopStations({int limit});
+  Future<List<String>> getCachedTopTags({int limit});
 }
 
 /// Concrete implementation of [ApiService] using the Dio HTTP client.
@@ -24,6 +28,7 @@ abstract class ApiService {
 /// Implements lightweight memory caching for popular stations, tags, and countries.
 class DioApiService implements ApiService {
   final Dio _dio;
+  final HiveService _hiveService;
 
   List<String> _availableServers = [
     'de1.api.radio-browser.info',
@@ -42,7 +47,41 @@ class DioApiService implements ApiService {
   final Map<String, _CacheEntry<List<Map<String, String>>>> _countriesCache =
       {};
 
-  DioApiService()
+  Future<void> _writeToPersistentCache(String key, dynamic data) async {
+    try {
+      final cacheData = {
+        'timestamp': DateTime.now().toIso8601String(),
+        'data': data,
+      };
+      await _hiveService.putCacheValue(key, jsonEncode(cacheData));
+    } catch (e) {
+      debugPrint('Failed to write to persistent cache: $e');
+    }
+  }
+
+  Future<dynamic> _readFromPersistentCache(String key, Duration maxAge) async {
+    try {
+      final String? cachedStr = _hiveService.getCacheValue(key);
+      if (cachedStr == null) return null;
+
+      final Map<String, dynamic> decoded = jsonDecode(cachedStr);
+      final String? timestampStr = decoded['timestamp'];
+      if (timestampStr == null) return null;
+
+      final timestamp = DateTime.tryParse(timestampStr);
+      if (timestamp == null) return null;
+
+      if (DateTime.now().difference(timestamp) > maxAge) {
+        return null; // Expired
+      }
+      return decoded['data'];
+    } catch (e) {
+      debugPrint('Failed to read from persistent cache: $e');
+      return null;
+    }
+  }
+
+  DioApiService(this._hiveService)
     : _dio = Dio(
         BaseOptions(
           connectTimeout: const Duration(seconds: 10),
@@ -130,23 +169,63 @@ class DioApiService implements ApiService {
       }
     }
 
-    final stations = await _requestWithFallback(() async {
-      final response = await _dio.get(
-        '$_baseUrl/json/stations/topclick/$limit',
-      );
-      if (response.statusCode == 200 && response.data is List) {
-        final List list = response.data;
-        return list.map((json) => Station.fromJson(json)).toList();
+    final persistentCachedData = await _readFromPersistentCache(
+      cacheKey,
+      _cacheDuration,
+    );
+    if (persistentCachedData != null && persistentCachedData is List) {
+      debugPrint('Returning persistent cached top stations for limit $limit');
+      try {
+        final list = (persistentCachedData)
+            .map((json) => Station.fromJson(json as Map<String, dynamic>))
+            .toList();
+        _stationsCache[cacheKey] = _CacheEntry(list);
+        return list;
+      } catch (e) {
+        debugPrint('Failed to parse persistent cached top stations: $e');
       }
-      throw DioException(
-        requestOptions: response.requestOptions,
-        response: response,
-        type: DioExceptionType.badResponse,
-      );
-    });
+    }
 
-    _stationsCache[cacheKey] = _CacheEntry(stations);
-    return stations;
+    try {
+      final stations = await _requestWithFallback(() async {
+        final response = await _dio.get(
+          '$_baseUrl/json/stations/topclick/$limit',
+        );
+        if (response.statusCode == 200 && response.data is List) {
+          final List list = response.data;
+          return list.map((json) => Station.fromJson(json)).toList();
+        }
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+        );
+      });
+
+      _stationsCache[cacheKey] = _CacheEntry(stations);
+      await _writeToPersistentCache(
+        cacheKey,
+        stations.map((s) => s.toJson()).toList(),
+      );
+      return stations;
+    } catch (e) {
+      debugPrint(
+        'Network request failed for top stations, attempting expired cache fallback: $e',
+      );
+      final fallbackData = await _readFromPersistentCache(
+        cacheKey,
+        const Duration(days: 30),
+      );
+      if (fallbackData != null && fallbackData is List) {
+        try {
+          final list = (fallbackData)
+              .map((json) => Station.fromJson(json as Map<String, dynamic>))
+              .toList();
+          return list;
+        } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
   /// Search radio stations based on custom parameters.
@@ -209,6 +288,21 @@ class DioApiService implements ApiService {
       }
     }
 
+    final persistentCachedData = await _readFromPersistentCache(
+      cacheKey,
+      _cacheDuration,
+    );
+    if (persistentCachedData != null && persistentCachedData is List) {
+      debugPrint('Returning persistent cached top tags for limit $limit');
+      try {
+        final list = List<String>.from(persistentCachedData);
+        _tagsCache[cacheKey] = _CacheEntry(list);
+        return list;
+      } catch (e) {
+        debugPrint('Failed to parse persistent cached top tags: $e');
+      }
+    }
+
     try {
       final tags = await _requestWithFallback(() async {
         final response = await _dio.get(
@@ -236,9 +330,19 @@ class DioApiService implements ApiService {
       });
 
       _tagsCache[cacheKey] = _CacheEntry(tags);
+      await _writeToPersistentCache(cacheKey, tags);
       return tags;
     } catch (e) {
-      debugPrint('Error fetching tags (using local fallback tags): $e');
+      debugPrint('Error fetching tags, attempting expired cache fallback: $e');
+      final fallbackData = await _readFromPersistentCache(
+        cacheKey,
+        const Duration(days: 30),
+      );
+      if (fallbackData != null && fallbackData is List) {
+        try {
+          return List<String>.from(fallbackData);
+        } catch (_) {}
+      }
       return [
         'Pop',
         'Rock',
@@ -261,6 +365,25 @@ class DioApiService implements ApiService {
       if (!entry.isExpired(_cacheDuration)) {
         debugPrint('Returning cached top countries for limit $limit');
         return entry.data;
+      }
+    }
+
+    final persistentCachedData = await _readFromPersistentCache(
+      cacheKey,
+      _cacheDuration,
+    );
+    if (persistentCachedData != null && persistentCachedData is List) {
+      debugPrint('Returning persistent cached top countries for limit $limit');
+      try {
+        final list = (persistentCachedData)
+            .map<Map<String, String>>(
+              (item) => Map<String, String>.from(item as Map),
+            )
+            .toList();
+        _countriesCache[cacheKey] = _CacheEntry(list);
+        return list;
+      } catch (e) {
+        debugPrint('Failed to parse persistent cached top countries: $e');
       }
     }
 
@@ -295,11 +418,59 @@ class DioApiService implements ApiService {
       });
 
       _countriesCache[cacheKey] = _CacheEntry(countries);
+      await _writeToPersistentCache(cacheKey, countries);
       return countries;
     } catch (e) {
-      debugPrint('Error fetching countries: $e');
+      debugPrint(
+        'Error fetching countries, attempting expired cache fallback: $e',
+      );
+      final fallbackData = await _readFromPersistentCache(
+        cacheKey,
+        const Duration(days: 30),
+      );
+      if (fallbackData != null && fallbackData is List) {
+        try {
+          return (fallbackData)
+              .map<Map<String, String>>(
+                (item) => Map<String, String>.from(item as Map),
+              )
+              .toList();
+        } catch (_) {}
+      }
       return [];
     }
+  }
+
+  @override
+  Future<List<Station>> getCachedTopStations({int limit = 40}) async {
+    final cacheKey = 'top_stations_$limit';
+    final persistentCachedData = await _readFromPersistentCache(
+      cacheKey,
+      const Duration(days: 30),
+    );
+    if (persistentCachedData != null && persistentCachedData is List) {
+      try {
+        return (persistentCachedData)
+            .map((json) => Station.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  @override
+  Future<List<String>> getCachedTopTags({int limit = 15}) async {
+    final cacheKey = 'top_tags_$limit';
+    final persistentCachedData = await _readFromPersistentCache(
+      cacheKey,
+      const Duration(days: 30),
+    );
+    if (persistentCachedData != null && persistentCachedData is List) {
+      try {
+        return List<String>.from(persistentCachedData);
+      } catch (_) {}
+    }
+    return [];
   }
 }
 

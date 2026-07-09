@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../core/di/di_providers.dart';
 import '../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
+
+part 'browser_provider.g.dart';
 
 /// ============================================================================
 /// BROWSER PROVIDER
@@ -94,7 +96,8 @@ class BrowserState {
 }
 
 /// Notifier managing station searches, category listing, caching, and history lists.
-class BrowserNotifier extends Notifier<BrowserState> {
+@Riverpod(keepAlive: true)
+class Browser extends _$Browser {
   late final StationRepository _repository;
 
   @override
@@ -112,8 +115,41 @@ class BrowserNotifier extends Notifier<BrowserState> {
 
   /// Initial setup fetching popular stations, tags, and local history.
   Future<void> _initData() async {
-    state = state.copyWith(isLoadingData: true, errorMessage: () => null);
+    // 1. Try to load cached data from Hive (even if expired) for instant UI response
+    try {
+      final cachedPopular = await _repository.getCachedPopularStations();
+      final cachedTags = await _repository.getCachedPopularTags();
+      final history = await _repository.getHistory();
 
+      if (cachedPopular.isNotEmpty || cachedTags.isNotEmpty) {
+        // Render cached data immediately so user sees it instantly!
+        state = state.copyWith(
+          popularStations: cachedPopular,
+          tags: cachedTags.isNotEmpty
+              ? cachedTags
+              : [
+                  'Pop',
+                  'Rock',
+                  'Jazz',
+                  'Classical',
+                  'News',
+                  'Dance',
+                  'Metal',
+                  'Lounge',
+                ],
+          stations: List.from(cachedPopular),
+          historyStations: history,
+          isInitialized: true,
+          isLoadingData: true, // Mark that we are still updating in background
+        );
+      } else {
+        state = state.copyWith(historyStations: history);
+      }
+    } catch (e) {
+      debugPrint('Error loading initial offline cache: $e');
+    }
+
+    // 2. Fetch fresh data from network in background
     try {
       // Connect to the API server and establish connectivity checks
       await _repository.initialize();
@@ -127,16 +163,18 @@ class BrowserNotifier extends Notifier<BrowserState> {
         tagsList = await _repository.getPopularTags();
       } catch (e) {
         debugPrint('Error fetching tags: $e');
-        tagsList = [
-          'Pop',
-          'Rock',
-          'Jazz',
-          'Classical',
-          'News',
-          'Dance',
-          'Metal',
-          'Lounge',
-        ];
+        tagsList = state.tags.isNotEmpty
+            ? state.tags
+            : [
+                'Pop',
+                'Rock',
+                'Jazz',
+                'Classical',
+                'News',
+                'Dance',
+                'Metal',
+                'Lounge',
+              ];
       }
 
       // Load local history log
@@ -148,15 +186,22 @@ class BrowserNotifier extends Notifier<BrowserState> {
         stations: List.from(popular),
         isInitialized: true,
         isLoadingData: false,
+        errorMessage: () => null, // Clear any previous error
       );
     } catch (e) {
       debugPrint('Initialization error: $e');
-      state = state.copyWith(
-        errorMessage: () =>
-            'Failed to load initial radio data. Please check your connection.',
-        stations: [],
-        isLoadingData: false,
-      );
+      // If we don't even have cached data, show error
+      if (state.popularStations.isEmpty) {
+        state = state.copyWith(
+          errorMessage: () =>
+              'Failed to load initial radio data. Please check your connection.',
+          stations: [],
+          isLoadingData: false,
+        );
+      } else {
+        // If we have cached data, just stop loading and don't fail hard
+        state = state.copyWith(isLoadingData: false);
+      }
     }
   }
 
@@ -257,8 +302,3 @@ class BrowserNotifier extends Notifier<BrowserState> {
     }
   }
 }
-
-/// Global Riverpod provider exposing the station browser state and notifier controls.
-final browserProvider = NotifierProvider<BrowserNotifier, BrowserState>(() {
-  return BrowserNotifier();
-});

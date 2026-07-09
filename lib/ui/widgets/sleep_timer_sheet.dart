@@ -90,7 +90,7 @@ class SleepTimerSheet extends ConsumerWidget {
     BuildContext context,
     String label,
     Duration? duration,
-    PlaybackNotifier notifier,
+    Playback notifier,
   ) {
     return InkWell(
       onTap: () {

@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../core/di/di_providers.dart';
 import '../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
+
+part 'playback_provider.g.dart';
 
 /// Type-safe enum for representing playback errors and connection states.
 enum PlaybackError {
@@ -127,7 +129,8 @@ class PlaybackState {
 }
 
 /// Notifier managing system volume controls, sleep timer schedules, and audio playback streams.
-class PlaybackNotifier extends Notifier<PlaybackState> {
+@Riverpod(keepAlive: true)
+class Playback extends _$Playback {
   final AudioPlayer _player = AudioPlayer();
   late final StationRepository _repository;
 
@@ -523,8 +526,3 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
     state = state.copyWith(sleepTimeLeftSeconds: 0);
   }
 }
-
-/// Global Riverpod provider exposing the audio playback state and notifier controls.
-final playbackProvider = NotifierProvider<PlaybackNotifier, PlaybackState>(() {
-  return PlaybackNotifier();
-});

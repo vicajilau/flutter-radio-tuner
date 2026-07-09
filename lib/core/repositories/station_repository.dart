@@ -18,6 +18,8 @@ abstract class StationRepository {
   Future<void> saveFavorites(List<Station> stations);
   Future<List<Station>> getHistory();
   Future<void> addHistory(Station station);
+  Future<List<Station>> getCachedPopularStations();
+  Future<List<String>> getCachedPopularTags();
 }
 
 /// Concrete implementation of [StationRepository].
@@ -87,5 +89,15 @@ class StationRepositoryImpl implements StationRepository {
   @override
   Future<void> addHistory(Station station) async {
     await _historyService.addHistory(station);
+  }
+
+  @override
+  Future<List<Station>> getCachedPopularStations() async {
+    return _apiService.getCachedTopStations(limit: 20);
+  }
+
+  @override
+  Future<List<String>> getCachedPopularTags() async {
+    return _apiService.getCachedTopTags(limit: 15);
   }
 }

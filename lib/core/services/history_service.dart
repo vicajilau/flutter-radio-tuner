@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/station_model.dart';
+import 'hive_service.dart';
 
 /// Interface for the playback history service.
 /// Declares methods to retrieve, add, and clear recently played stations.
@@ -10,37 +10,35 @@ abstract class HistoryService {
   Future<void> clearHistory();
 }
 
-/// SharedPreferences-backed implementation of [HistoryService]
+/// Hive-backed implementation of [HistoryService]
 /// for persistent storage of user's recently played radio stations.
-class SharedPreferencesHistoryService implements HistoryService {
-  static const String _historyKey = 'played_history_stations';
+class HiveHistoryService implements HistoryService {
+  static const String _historyKey = 'history_list';
   static const int _maxHistoryCount = 15;
+
+  final HiveService _hiveService;
+
+  HiveHistoryService(this._hiveService);
 
   /// Get the list of recently played stations.
   @override
   Future<List<Station>> getHistory() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? historyJson = prefs.getStringList(_historyKey);
+    final String? historyJsonStr = _hiveService.getHistoryValue(_historyKey);
+    if (historyJsonStr == null) return [];
 
-    if (historyJson == null) return [];
-
-    return historyJson
-        .map((jsonStr) {
-          try {
-            final Map<String, dynamic> decoded = jsonDecode(jsonStr);
-            return Station.fromJson(decoded);
-          } catch (_) {
-            return null;
-          }
-        })
-        .whereType<Station>()
-        .toList();
+    try {
+      final List decodedList = jsonDecode(historyJsonStr) as List;
+      return decodedList
+          .map((json) => Station.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   /// Add a station to playback history, moving it to the top or adding it.
   @override
   Future<void> addHistory(Station station) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
     final history = await getHistory();
 
     // Remove if already in history to move to top
@@ -54,14 +52,13 @@ class SharedPreferencesHistoryService implements HistoryService {
       history.removeRange(_maxHistoryCount, history.length);
     }
 
-    final listJson = history.map((s) => jsonEncode(s.toJson())).toList();
-    await prefs.setStringList(_historyKey, listJson);
+    final String encoded = jsonEncode(history.map((s) => s.toJson()).toList());
+    await _hiveService.putHistoryValue(_historyKey, encoded);
   }
 
   /// Clear the recently played history.
   @override
   Future<void> clearHistory() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_historyKey);
+    await _hiveService.deleteHistoryValue(_historyKey);
   }
 }

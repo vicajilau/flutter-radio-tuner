@@ -1,7 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../core/di/di_providers.dart';
 import '../core/repositories/station_repository.dart';
 import '../models/station_model.dart';
+
+part 'favorites_provider.g.dart';
 
 /// State class containing the favorites data and loading indicator.
 class FavoritesState {
@@ -20,7 +22,8 @@ class FavoritesState {
 
 /// Notifier that manages the user's favorite radio stations.
 /// Persists favorite selections across app launches using [StationRepository].
-class FavoritesNotifier extends Notifier<FavoritesState> {
+@Riverpod(keepAlive: true)
+class Favorites extends _$Favorites {
   late final StationRepository _repository;
 
   @override
@@ -73,10 +76,3 @@ class FavoritesNotifier extends Notifier<FavoritesState> {
     await _repository.saveFavorites(currentList);
   }
 }
-
-/// Global provider for the favorites state.
-final favoritesProvider = NotifierProvider<FavoritesNotifier, FavoritesState>(
-  () {
-    return FavoritesNotifier();
-  },
-);
