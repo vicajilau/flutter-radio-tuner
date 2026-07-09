@@ -2,6 +2,9 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import '../../models/station_model.dart';
 
+/// Interface for the API service.
+/// Declares operations to communicate with the Radio Browser API,
+/// including server initialization, station search, and fetching popular tags.
 abstract class ApiService {
   Future<void> initialize();
   Future<List<Station>> getTopStations({int limit});
@@ -16,9 +19,20 @@ abstract class ApiService {
   Future<List<Map<String, String>>> getTopCountries({int limit});
 }
 
+/// Concrete implementation of [ApiService] using the Dio HTTP client.
+/// Dynamically resolves the best active server from the Radio Browser network.
 class DioApiService implements ApiService {
   final Dio _dio;
-  String _baseUrl = 'https://de1.api.radio-browser.info'; // Default fallback
+
+  List<String> _availableServers = [
+    'de1.api.radio-browser.info',
+    'fr1.api.radio-browser.info',
+    'nl1.api.radio-browser.info',
+    'at1.api.radio-browser.info',
+  ];
+  int _currentServerIndex = 0;
+
+  String get _baseUrl => 'https://${_availableServers[_currentServerIndex]}';
 
   DioApiService()
     : _dio = Dio(
@@ -42,28 +56,64 @@ class DioApiService implements ApiService {
           response.data is List &&
           (response.data as List).isNotEmpty) {
         final List servers = response.data;
-        // Find a server that is online and has a valid name
+        final List<String> resolved = [];
         for (var server in servers) {
           if (server['name'] != null) {
-            _baseUrl = 'https://${server['name']}';
-            developer.log(
-              'Resolved active Radio Browser API server: $_baseUrl',
-            );
-            return;
+            resolved.add(server['name'].toString());
           }
+        }
+        if (resolved.isNotEmpty) {
+          resolved.shuffle();
+          _availableServers = resolved;
+          _currentServerIndex = 0;
+          developer.log(
+            'Resolved ${resolved.length} active Radio Browser API servers. Starting with: $_baseUrl',
+          );
+          return;
         }
       }
     } catch (e) {
       developer.log(
-        'Failed to resolve active server, falling back to $_baseUrl. Error: $e',
+        'Failed to resolve active servers list, falling back to default mirrors. Error: $e',
       );
     }
+  }
+
+  /// Runs an API request and automatically falls back to a different mirror if it fails.
+  Future<T> _requestWithFallback<T>(Future<T> Function() requestFn) async {
+    int attempts = 0;
+    final int maxAttempts = _availableServers.length.clamp(1, 5);
+    dynamic lastError;
+
+    while (attempts < maxAttempts) {
+      try {
+        return await requestFn();
+      } catch (e) {
+        lastError = e;
+        attempts++;
+        developer.log(
+          'Request failed using $_baseUrl. Attempt $attempts of $maxAttempts. Error: $e',
+        );
+        if (attempts >= maxAttempts) {
+          break;
+        }
+        // Rotate to the next available server
+        _currentServerIndex =
+            (_currentServerIndex + 1) % _availableServers.length;
+        developer.log('Falling back to next server: $_baseUrl');
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
+    throw Exception('All API servers failed.');
   }
 
   /// Get top clicked/popular radio stations.
   @override
   Future<List<Station>> getTopStations({int limit = 40}) async {
-    try {
+    return _requestWithFallback(() async {
       final response = await _dio.get(
         '$_baseUrl/json/stations/topclick/$limit',
       );
@@ -71,13 +121,12 @@ class DioApiService implements ApiService {
         final List list = response.data;
         return list.map((json) => Station.fromJson(json)).toList();
       }
-      return [];
-    } catch (e) {
-      developer.log('Error fetching top stations: $e');
-      throw Exception(
-        'Failed to fetch popular stations. Please check your internet connection.',
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
       );
-    }
+    });
   }
 
   /// Search radio stations based on custom parameters.
@@ -89,7 +138,7 @@ class DioApiService implements ApiService {
     String? language,
     int limit = 50,
   }) async {
-    try {
+    return _requestWithFallback(() async {
       final Map<String, dynamic> queryParameters = {
         'limit': limit,
         'hidebroken': 'true',
@@ -119,39 +168,44 @@ class DioApiService implements ApiService {
         final List list = response.data;
         return list.map((json) => Station.fromJson(json)).toList();
       }
-      return [];
-    } catch (e) {
-      developer.log('Error searching stations: $e');
-      throw Exception(
-        'Failed to search stations. Please check your internet connection.',
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
       );
-    }
+    });
   }
 
   /// Fetch top tags/genres by station count.
   @override
   Future<List<String>> getTopTags({int limit = 15}) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/json/tags',
-        queryParameters: {
-          'limit': limit,
-          'order': 'stationcount',
-          'reverse': 'true',
-          'hidebroken': 'true',
-        },
-      );
+      return await _requestWithFallback(() async {
+        final response = await _dio.get(
+          '$_baseUrl/json/tags',
+          queryParameters: {
+            'limit': limit,
+            'order': 'stationcount',
+            'reverse': 'true',
+            'hidebroken': 'true',
+          },
+        );
 
-      if (response.statusCode == 200 && response.data is List) {
-        final List list = response.data;
-        return list
-            .map((item) => item['name']?.toString() ?? '')
-            .where((name) => name.isNotEmpty && name.length > 2)
-            .toList();
-      }
-      return [];
+        if (response.statusCode == 200 && response.data is List) {
+          final List list = response.data;
+          return list
+              .map((item) => item['name']?.toString() ?? '')
+              .where((name) => name.isNotEmpty && name.length > 2)
+              .toList();
+        }
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+        );
+      });
     } catch (e) {
-      developer.log('Error fetching tags: $e');
+      developer.log('Error fetching tags (using local fallback tags): $e');
       return [
         'Pop',
         'Rock',
@@ -169,28 +223,34 @@ class DioApiService implements ApiService {
   @override
   Future<List<Map<String, String>>> getTopCountries({int limit = 15}) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl/json/countries',
-        queryParameters: {
-          'limit': limit,
-          'order': 'stationcount',
-          'reverse': 'true',
-        },
-      );
+      return await _requestWithFallback(() async {
+        final response = await _dio.get(
+          '$_baseUrl/json/countries',
+          queryParameters: {
+            'limit': limit,
+            'order': 'stationcount',
+            'reverse': 'true',
+          },
+        );
 
-      if (response.statusCode == 200 && response.data is List) {
-        final List list = response.data;
-        return list
-            .map<Map<String, String>>(
-              (item) => {
-                'name': item['name']?.toString() ?? '',
-                'code': item['iso_3166_1']?.toString() ?? '',
-              },
-            )
-            .where((c) => c['name']!.isNotEmpty)
-            .toList();
-      }
-      return [];
+        if (response.statusCode == 200 && response.data is List) {
+          final List list = response.data;
+          return list
+              .map<Map<String, String>>(
+                (item) => {
+                  'name': item['name']?.toString() ?? '',
+                  'code': item['iso_3166_1']?.toString() ?? '',
+                },
+              )
+              .where((c) => c['name']!.isNotEmpty)
+              .toList();
+        }
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+        );
+      });
     } catch (e) {
       developer.log('Error fetching countries: $e');
       return [];

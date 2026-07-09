@@ -3,6 +3,9 @@ import '../services/api_service.dart';
 import '../services/favorites_service.dart';
 import '../services/history_service.dart';
 
+/// Interface for the radio station repository.
+/// Defines the data access contract for fetching popular stations,
+/// filtering tags, and managing playback history and favorites.
 abstract class StationRepository {
   Future<void> initialize();
   Future<List<Station>> getPopularStations();
@@ -16,6 +19,9 @@ abstract class StationRepository {
   Future<void> addHistory(Station station);
 }
 
+/// Concrete implementation of [StationRepository].
+/// Coordinates data retrieval from [ApiService], [FavoritesService],
+/// and [HistoryService].
 class StationRepositoryImpl implements StationRepository {
   final ApiService _apiService;
   final FavoritesService _favoritesService;

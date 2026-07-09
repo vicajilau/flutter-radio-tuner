@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/station_model.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
+/// List item / card widget displaying a recently played radio station in a compact format.
+/// Features a leading logo, station title, codec info, and handles tap to resume playback.
 class HistoryTile extends StatelessWidget {
   final Station station;
-  final RadioProvider radioProvider;
 
-  const HistoryTile({
-    super.key,
-    required this.station,
-    required this.radioProvider,
-  });
+  const HistoryTile({super.key, required this.station});
 
   @override
   Widget build(BuildContext context) {
-    final bool isCurrent =
-        radioProvider.currentStation?.stationuuid == station.stationuuid;
+    debugPrint("Building HistoryTile");
+    final bool isCurrent = context.select<RadioProvider, bool>(
+      (p) => p.currentStation?.stationuuid == station.stationuuid,
+    );
+    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
 
     return Padding(
       padding: const EdgeInsets.only(right: 12.0),
@@ -29,7 +30,7 @@ class HistoryTile extends StatelessWidget {
           opacity: isCurrent ? 0.12 : 0.04,
           border: isCurrent
               ? Border.all(
-                  color: AppTheme.primaryStart.withValues(alpha: 0.3),
+                  color: context.colors.primaryStart.withValues(alpha: 0.3),
                   width: 1.0,
                 )
               : null,
@@ -46,12 +47,14 @@ class HistoryTile extends StatelessWidget {
                     return Container(
                       width: 36,
                       height: 36,
-                      color: AppTheme.surfaceLight,
-                      child: const Center(
+                      color: context.colors.surfaceLight,
+                      child: Center(
                         child: Icon(
                           Icons.radio,
                           size: 16,
-                          color: Colors.white38,
+                          color: context.colors.textSecondary.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     );
@@ -66,10 +69,10 @@ class HistoryTile extends StatelessWidget {
                   children: [
                     Text(
                       station.name.trim(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -77,9 +80,9 @@ class HistoryTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       station.codec,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
-                        color: AppTheme.textSecondary,
+                        color: context.colors.textSecondary,
                       ),
                     ),
                   ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+/// Loading placeholder widget that displays a shimmering bone skeleton layout.
+/// Used to represent loading states for station lists.
 class StationShimmer extends StatelessWidget {
   const StationShimmer({super.key});
 

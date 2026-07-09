@@ -1,3 +1,6 @@
+/// Data model representing a radio station.
+/// Contains metadata such as the unique identifier (UUID), name, streaming URL,
+/// favicon, genre tags, country, audio codec, and popularity statistics.
 class Station {
   final String stationuuid;
   final String name;

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import 'glass_container.dart';
 
+/// Bottom sheet widget allowing users to select or cancel a sleep timer duration.
+/// Schedules automatic playback stoppage based on chosen presets.
 class SleepTimerSheet extends StatelessWidget {
   final RadioProvider radioProvider;
 
@@ -25,23 +28,23 @@ class SleepTimerSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white30,
+              color: context.colors.textPrimary.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            'SLEEP TIMER',
+            context.l10n.sleepTimer,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               letterSpacing: 2.0,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Automatically stop playback after duration',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          Text(
+            context.l10n.sleepTimerSubtitle,
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 24),
           Wrap(
@@ -49,7 +52,7 @@ class SleepTimerSheet extends StatelessWidget {
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _timerOption(context, 'Cancel', null, radioProvider),
+              _timerOption(context, context.l10n.cancel, null, radioProvider),
               _timerOption(
                 context,
                 '5m',
@@ -106,14 +109,16 @@ class SleepTimerSheet extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          color: context.colors.textPrimary.withValues(alpha: 0.04),
+          border: Border.all(
+            color: context.colors.textPrimary.withValues(alpha: 0.06),
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
+          style: TextStyle(
+            color: context.colors.textSecondary,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),

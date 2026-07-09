@@ -3,9 +3,13 @@ import 'package:provider/provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/radio_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/extensions/context_l10n.dart';
 import '../screens/player_screen.dart';
 import 'glass_container.dart';
 
+/// Persistent mini player widget displayed at the bottom of the home screen.
+/// Provides access to quick playback controls (play/pause, favorite toggle)
+/// and displays the current station name with a sliding transition to the full player.
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
@@ -22,6 +26,8 @@ class MiniPlayer extends StatelessWidget {
     final isFavorited = favoritesProvider.isFavorite(
       currentStation.stationuuid,
     );
+    final bool isPortrait =
+        MediaQuery.orientationOf(context) == Orientation.portrait;
 
     return SafeArea(
       top: false,
@@ -60,7 +66,7 @@ class MiniPlayer extends StatelessWidget {
             opacity: 0.15,
             borderOpacity: 0.2,
             border: Border.all(
-              color: AppTheme.primaryStart.withValues(alpha: 0.2),
+              color: context.colors.primaryStart.withValues(alpha: 0.2),
               width: 1.0,
             ),
             child: Row(
@@ -74,7 +80,9 @@ class MiniPlayer extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: context.colors.textPrimary.withValues(
+                          alpha: 0.05,
+                        ),
                       ),
                     ),
                     child: ClipRRect(
@@ -84,12 +92,14 @@ class MiniPlayer extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: AppTheme.surfaceLight,
-                            child: const Center(
+                            color: context.colors.surfaceLight,
+                            child: Center(
                               child: Icon(
                                 Icons.radio,
                                 size: 20,
-                                color: Colors.white54,
+                                color: context.colors.textSecondary.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                           );
@@ -117,43 +127,20 @@ class MiniPlayer extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          if (isBuffering)
-                            Text(
-                              'Buffering stream...',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    fontSize: 11,
-                                    color: AppTheme.primaryStart,
-                                  ),
-                            )
-                          else
-                            Text(
-                              isPlaying ? 'Playing Live' : 'Paused',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    fontSize: 11,
-                                    color: isPlaying
-                                        ? AppTheme.secondary
-                                        : AppTheme.textSecondary,
-                                  ),
-                            ),
-                          if (currentStation.bitrate > 0) ...[
-                            Text(
-                              '  •  ',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(fontSize: 10),
-                            ),
-                            Text(
-                              '${currentStation.bitrate} kbps',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(fontSize: 10),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        isBuffering
+                            ? context.l10n.bufferingStream
+                            : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 11,
+                          color: isBuffering
+                              ? context.colors.primaryStart
+                              : (isPlaying
+                                    ? context.colors.secondary
+                                    : context.colors.textSecondary),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -164,29 +151,33 @@ class MiniPlayer extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Favorite button
-                    IconButton(
-                      icon: Icon(
-                        isFavorited ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorited ? Colors.redAccent : Colors.white38,
-                        size: 20,
+                    // Favorite button (only shown in landscape mode to save horizontal space)
+                    if (!isPortrait) ...[
+                      IconButton(
+                        icon: Icon(
+                          isFavorited ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorited
+                              ? Colors.redAccent
+                              : context.colors.textMuted,
+                          size: 20,
+                        ),
+                        onPressed: () =>
+                            favoritesProvider.toggleFavorite(currentStation),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(8),
+                        splashRadius: 20,
                       ),
-                      onPressed: () =>
-                          favoritesProvider.toggleFavorite(currentStation),
-                      constraints: const BoxConstraints(),
-                      padding: const EdgeInsets.all(8),
-                      splashRadius: 20,
-                    ),
-                    const SizedBox(width: 4),
+                      const SizedBox(width: 4),
+                    ],
 
                     // Play/Pause button
                     GestureDetector(
                       onTap: () => radioProvider.togglePlay(),
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: AppTheme.primaryGradient,
+                          gradient: context.colors.primaryGradient,
                         ),
                         child: isBuffering
                             ? const SizedBox(
@@ -205,6 +196,20 @@ class MiniPlayer extends StatelessWidget {
                                 size: 20,
                               ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Close/Stop player button
+                    IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: context.colors.textMuted,
+                        size: 20,
+                      ),
+                      onPressed: () => radioProvider.stopRadio(),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(8),
+                      splashRadius: 20,
                     ),
                   ],
                 ),

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import '../../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
+/// ChangeNotifier that manages the user's favorite radio stations.
+/// Observes, updates, and persists favorite selections across app launches.
 class FavoritesProvider with ChangeNotifier {
   final StationRepository _repository;
   List<Station> _favorites = [];

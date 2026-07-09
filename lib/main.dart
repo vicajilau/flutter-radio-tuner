@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_radio_tuner/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/services/audio_initializer.dart';
 import 'core/theme/app_theme.dart';
@@ -13,11 +14,14 @@ import 'ui/screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AudioInitializer.initialize();
-  runApp(const MyApp());
+  runApp(const RadioApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// The main entry point class of the application (RadioApp).
+/// Configures the dependency injection tree, initializes state providers,
+/// and defines the visual theme and the initial screen of the app.
+class RadioApp extends StatelessWidget {
+  const RadioApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +45,10 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Labhouse FM',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const SplashScreen(),
       ),
     );
