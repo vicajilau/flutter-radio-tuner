@@ -240,6 +240,41 @@ class Browser extends _$Browser {
     }
   }
 
+  /// Reloads fresh data from the network (bypassing caches), but preserves current playback.
+  Future<void> refreshData() async {
+    state = state.copyWith(isLoadingData: true);
+    try {
+      // 1. Re-initialize the repository (resolves a fresh active API server)
+      await _repository.initialize();
+
+      // 2. Fetch fresh popular stations and tags with forceRefresh = true
+      final popular = await _repository.getPopularStations(forceRefresh: true);
+
+      List<String> tagsList = [];
+      try {
+        tagsList = await _repository.getPopularTags(forceRefresh: true);
+      } catch (e) {
+        debugPrint('Error refreshing tags: $e');
+        tagsList = state.tags;
+      }
+
+      state = state.copyWith(
+        popularStations: popular,
+        tags: tagsList,
+        stations: List.from(popular),
+        isInitialized: true,
+        isLoadingData: false,
+        errorMessage: () => null,
+      );
+    } catch (e) {
+      debugPrint('Error refreshing data from network: $e');
+      state = state.copyWith(
+        isLoadingData: false,
+        errorMessage: () => 'Failed to refresh. Showing cached data.',
+      );
+    }
+  }
+
   /// Search and filter stations using query and/or selected tag.
   ///
   /// Updates search filters in the state and performs repository queries.

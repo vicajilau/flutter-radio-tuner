@@ -9,7 +9,7 @@ import 'hive_service.dart';
 /// including server initialization, station search, and fetching popular tags.
 abstract class ApiService {
   Future<void> initialize();
-  Future<List<Station>> getTopStations({int limit});
+  Future<List<Station>> getTopStations({int limit, bool forceRefresh});
   Future<List<Station>> searchStations({
     String? name,
     String? country,
@@ -17,7 +17,7 @@ abstract class ApiService {
     String? language,
     int limit,
   });
-  Future<List<String>> getTopTags({int limit});
+  Future<List<String>> getTopTags({int limit, bool forceRefresh});
   Future<List<Map<String, String>>> getTopCountries({int limit});
   Future<List<Station>> getCachedTopStations({int limit});
   Future<List<String>> getCachedTopTags({int limit});
@@ -159,20 +159,21 @@ class DioApiService implements ApiService {
 
   /// Get top clicked/popular radio stations.
   @override
-  Future<List<Station>> getTopStations({int limit = 40}) async {
+  Future<List<Station>> getTopStations({int limit = 40, bool forceRefresh = false}) async {
     final cacheKey = 'top_stations_$limit';
-    if (_stationsCache.containsKey(cacheKey)) {
-      final entry = _stationsCache[cacheKey]!;
-      if (!entry.isExpired(_cacheDuration)) {
-        debugPrint('Returning cached top stations for limit $limit');
-        return entry.data;
+    if (!forceRefresh) {
+      if (_stationsCache.containsKey(cacheKey)) {
+        final entry = _stationsCache[cacheKey]!;
+        if (!entry.isExpired(_cacheDuration)) {
+          debugPrint('Returning cached top stations for limit $limit');
+          return entry.data;
+        }
       }
-    }
 
-    final persistentCachedData = await _readFromPersistentCache(
-      cacheKey,
-      _cacheDuration,
-    );
+      final persistentCachedData = await _readFromPersistentCache(
+        cacheKey,
+        _cacheDuration,
+      );
     if (persistentCachedData != null && persistentCachedData is List) {
       debugPrint('Returning persistent cached top stations for limit $limit');
       try {
@@ -184,6 +185,7 @@ class DioApiService implements ApiService {
       } catch (e) {
         debugPrint('Failed to parse persistent cached top stations: $e');
       }
+    }
     }
 
     try {
@@ -278,20 +280,21 @@ class DioApiService implements ApiService {
 
   /// Fetch top tags/genres by station count.
   @override
-  Future<List<String>> getTopTags({int limit = 15}) async {
+  Future<List<String>> getTopTags({int limit = 15, bool forceRefresh = false}) async {
     final cacheKey = 'top_tags_$limit';
-    if (_tagsCache.containsKey(cacheKey)) {
-      final entry = _tagsCache[cacheKey]!;
-      if (!entry.isExpired(_cacheDuration)) {
-        debugPrint('Returning cached top tags for limit $limit');
-        return entry.data;
+    if (!forceRefresh) {
+      if (_tagsCache.containsKey(cacheKey)) {
+        final entry = _tagsCache[cacheKey]!;
+        if (!entry.isExpired(_cacheDuration)) {
+          debugPrint('Returning cached top tags for limit $limit');
+          return entry.data;
+        }
       }
-    }
 
-    final persistentCachedData = await _readFromPersistentCache(
-      cacheKey,
-      _cacheDuration,
-    );
+      final persistentCachedData = await _readFromPersistentCache(
+        cacheKey,
+        _cacheDuration,
+      );
     if (persistentCachedData != null && persistentCachedData is List) {
       debugPrint('Returning persistent cached top tags for limit $limit');
       try {
@@ -301,6 +304,7 @@ class DioApiService implements ApiService {
       } catch (e) {
         debugPrint('Failed to parse persistent cached top tags: $e');
       }
+    }
     }
 
     try {

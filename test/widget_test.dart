@@ -31,12 +31,12 @@ class MockStationRepository implements StationRepository {
   }
 
   @override
-  Future<List<Station>> getPopularStations() async {
+  Future<List<Station>> getPopularStations({bool forceRefresh = false}) async {
     return popular;
   }
 
   @override
-  Future<List<String>> getPopularTags() async {
+  Future<List<String>> getPopularTags({bool forceRefresh = false}) async {
     return tags;
   }
 

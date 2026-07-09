@@ -8,8 +8,8 @@ import '../services/history_service.dart';
 /// filtering tags, and managing playback history and favorites.
 abstract class StationRepository {
   Future<void> initialize();
-  Future<List<Station>> getPopularStations();
-  Future<List<String>> getPopularTags();
+  Future<List<Station>> getPopularStations({bool forceRefresh});
+  Future<List<String>> getPopularTags({bool forceRefresh});
   Future<List<Station>> searchStations({String? query, String? tag});
   Future<List<Station>> getFavorites();
   Future<bool> isFavorite(String stationuuid);
@@ -42,13 +42,13 @@ class StationRepositoryImpl implements StationRepository {
   }
 
   @override
-  Future<List<Station>> getPopularStations() async {
-    return _apiService.getTopStations(limit: 20);
+  Future<List<Station>> getPopularStations({bool forceRefresh = false}) async {
+    return _apiService.getTopStations(limit: 20, forceRefresh: forceRefresh);
   }
 
   @override
-  Future<List<String>> getPopularTags() async {
-    return _apiService.getTopTags(limit: 15);
+  Future<List<String>> getPopularTags({bool forceRefresh = false}) async {
+    return _apiService.getTopTags(limit: 15, forceRefresh: forceRefresh);
   }
 
   @override

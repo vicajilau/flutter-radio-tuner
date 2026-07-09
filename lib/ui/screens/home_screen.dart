@@ -89,9 +89,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             // Main Layout
             SafeArea(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(browserProvider.notifier).refreshData();
+                },
+                color: context.colors.primaryStart,
+                backgroundColor: context.colors.surface,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: [
                   // Premium App Header
                   SliverToBoxAdapter(
                     child: Padding(
@@ -331,6 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
+          ),
 
             // Bottom Floating Mini Player
             const Positioned(bottom: 0, left: 0, right: 0, child: MiniPlayer()),
