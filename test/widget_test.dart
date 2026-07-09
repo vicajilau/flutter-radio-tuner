@@ -58,6 +58,11 @@ class MockStationRepository implements StationRepository {
   }
 
   @override
+  Future<void> saveFavorites(List<Station> stations) async {
+    favorites = List.from(stations);
+  }
+
+  @override
   Future<List<Station>> getHistory() async {
     return history;
   }
@@ -165,6 +170,67 @@ void main() {
 
       await notifier.toggleFavorite(station);
       expect(notifier.isFavorite(station.stationuuid), isFalse);
+    });
+
+    test('Should reorder favorites and persist correctly', () async {
+      final station1 = Station(
+        stationuuid: 'fav-1',
+        name: 'Station 1',
+        url: 'http://test.url1',
+        urlResolved: 'http://test.url1',
+        homepage: '',
+        favicon: '',
+        tags: '',
+        country: '',
+        countrycode: '',
+        state: '',
+        language: '',
+        codec: 'MP3',
+        bitrate: 128,
+        votes: 10,
+        clickcount: 5,
+      );
+      final station2 = Station(
+        stationuuid: 'fav-2',
+        name: 'Station 2',
+        url: 'http://test.url2',
+        urlResolved: 'http://test.url2',
+        homepage: '',
+        favicon: '',
+        tags: '',
+        country: '',
+        countrycode: '',
+        state: '',
+        language: '',
+        codec: 'MP3',
+        bitrate: 128,
+        votes: 10,
+        clickcount: 5,
+      );
+
+      final mockRepo = MockStationRepository();
+      mockRepo.favorites = [station1, station2];
+
+      final container = ProviderContainer(
+        overrides: [stationRepositoryProvider.overrideWithValue(mockRepo)],
+      );
+      addTearDown(() {
+        container.dispose();
+      });
+
+      final notifier = container.read(favoritesProvider.notifier);
+      await Future.delayed(Duration.zero);
+      while (container.read(favoritesProvider).isLoading) {
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
+
+      expect(container.read(favoritesProvider).favorites, [station1, station2]);
+
+      // Reorder: Move station1 (index 0) to index 1 (after station2)
+      await notifier.reorderFavorites(0, 1);
+
+      expect(container.read(favoritesProvider).favorites, [station2, station1]);
+      expect(mockRepo.favorites, [station2, station1]);
     });
   });
 

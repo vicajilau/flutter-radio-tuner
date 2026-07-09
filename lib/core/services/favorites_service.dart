@@ -9,6 +9,7 @@ abstract class FavoritesService {
   Future<bool> isFavorite(String stationuuid);
   Future<void> addFavorite(Station station);
   Future<void> removeFavorite(String stationuuid);
+  Future<void> saveFavorites(List<Station> stations);
 }
 
 /// SharedPreferences-backed implementation of [FavoritesService]
@@ -65,6 +66,14 @@ class SharedPreferencesFavoritesService implements FavoritesService {
 
     favorites.removeWhere((s) => s.stationuuid == stationuuid);
     final listJson = favorites.map((s) => jsonEncode(s.toJson())).toList();
+    await prefs.setStringList(_favoritesKey, listJson);
+  }
+
+  /// Save entire list of favorite stations to persist reordering.
+  @override
+  Future<void> saveFavorites(List<Station> stations) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final listJson = stations.map((s) => jsonEncode(s.toJson())).toList();
     await prefs.setStringList(_favoritesKey, listJson);
   }
 }

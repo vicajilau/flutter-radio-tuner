@@ -2,13 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/favorites_provider.dart';
 import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/mini_player.dart';
-import '../widgets/favorite_card.dart';
+import '../widgets/favorites_deck.dart';
 import '../widgets/history_tile.dart';
 import '../widgets/genre_selector.dart';
 import '../widgets/explore_stations.dart';
@@ -202,54 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SliverToBoxAdapter(child: GenreSelector()),
 
                   // Favorites Deck (horizontal card scroll)
-                  SliverToBoxAdapter(
-                    child: Consumer(
-                      builder: (context, ref, child) {
-                        final favorites = ref.watch(
-                          favoritesProvider.select((s) => s.favorites),
-                        );
-                        if (favorites.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                20,
-                                24,
-                                20,
-                                12,
-                              ),
-                              child: Text(
-                                context.l10n.favoriteStations,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.colors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 140,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                itemCount: favorites.length,
-                                itemBuilder: (context, index) {
-                                  final station = favorites[index];
-                                  return FavoriteCard(station: station);
-                                },
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
+                  const SliverToBoxAdapter(child: FavoritesDeck()),
 
                   // Recently Played History
                   SliverToBoxAdapter(

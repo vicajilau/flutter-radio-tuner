@@ -62,6 +62,16 @@ class FavoritesNotifier extends Notifier<FavoritesState> {
       await _repository.addFavorite(station);
     }
   }
+
+  /// Reorders favorite stations in-memory and persists the new order.
+  Future<void> reorderFavorites(int oldIndex, int newIndex) async {
+    final currentList = List<Station>.from(state.favorites);
+    final Station movedStation = currentList.removeAt(oldIndex);
+    currentList.insert(newIndex, movedStation);
+
+    state = state.copyWith(favorites: currentList);
+    await _repository.saveFavorites(currentList);
+  }
 }
 
 /// Global provider for the favorites state.

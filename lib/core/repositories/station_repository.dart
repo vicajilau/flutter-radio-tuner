@@ -15,6 +15,7 @@ abstract class StationRepository {
   Future<bool> isFavorite(String stationuuid);
   Future<void> addFavorite(Station station);
   Future<void> removeFavorite(String stationuuid);
+  Future<void> saveFavorites(List<Station> stations);
   Future<List<Station>> getHistory();
   Future<void> addHistory(Station station);
 }
@@ -71,6 +72,11 @@ class StationRepositoryImpl implements StationRepository {
   @override
   Future<void> removeFavorite(String stationuuid) async {
     await _favoritesService.removeFavorite(stationuuid);
+  }
+
+  @override
+  Future<void> saveFavorites(List<Station> stations) async {
+    await _favoritesService.saveFavorites(stations);
   }
 
   @override
