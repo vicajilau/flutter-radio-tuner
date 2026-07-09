@@ -21,6 +21,7 @@ abstract class ApiService {
 
 /// Concrete implementation of [ApiService] using the Dio HTTP client.
 /// Dynamically resolves the best active server from the Radio Browser network.
+/// Implements lightweight memory caching for popular stations, tags, and countries.
 class DioApiService implements ApiService {
   final Dio _dio;
 
@@ -33,6 +34,13 @@ class DioApiService implements ApiService {
   int _currentServerIndex = 0;
 
   String get _baseUrl => 'https://${_availableServers[_currentServerIndex]}';
+
+  // Cache configuration
+  static const Duration _cacheDuration = Duration(minutes: 5);
+  final Map<String, _CacheEntry<List<Station>>> _stationsCache = {};
+  final Map<String, _CacheEntry<List<String>>> _tagsCache = {};
+  final Map<String, _CacheEntry<List<Map<String, String>>>> _countriesCache =
+      {};
 
   DioApiService()
     : _dio = Dio(
@@ -113,7 +121,16 @@ class DioApiService implements ApiService {
   /// Get top clicked/popular radio stations.
   @override
   Future<List<Station>> getTopStations({int limit = 40}) async {
-    return _requestWithFallback(() async {
+    final cacheKey = 'top_stations_$limit';
+    if (_stationsCache.containsKey(cacheKey)) {
+      final entry = _stationsCache[cacheKey]!;
+      if (!entry.isExpired(_cacheDuration)) {
+        developer.log('Returning cached top stations for limit $limit');
+        return entry.data;
+      }
+    }
+
+    final stations = await _requestWithFallback(() async {
       final response = await _dio.get(
         '$_baseUrl/json/stations/topclick/$limit',
       );
@@ -127,6 +144,9 @@ class DioApiService implements ApiService {
         type: DioExceptionType.badResponse,
       );
     });
+
+    _stationsCache[cacheKey] = _CacheEntry(stations);
+    return stations;
   }
 
   /// Search radio stations based on custom parameters.
@@ -138,6 +158,7 @@ class DioApiService implements ApiService {
     String? language,
     int limit = 50,
   }) async {
+    // Search is dynamic, so we do not cache general searches to ensure real-time results.
     return _requestWithFallback(() async {
       final Map<String, dynamic> queryParameters = {
         'limit': limit,
@@ -179,8 +200,17 @@ class DioApiService implements ApiService {
   /// Fetch top tags/genres by station count.
   @override
   Future<List<String>> getTopTags({int limit = 15}) async {
+    final cacheKey = 'top_tags_$limit';
+    if (_tagsCache.containsKey(cacheKey)) {
+      final entry = _tagsCache[cacheKey]!;
+      if (!entry.isExpired(_cacheDuration)) {
+        developer.log('Returning cached top tags for limit $limit');
+        return entry.data;
+      }
+    }
+
     try {
-      return await _requestWithFallback(() async {
+      final tags = await _requestWithFallback(() async {
         final response = await _dio.get(
           '$_baseUrl/json/tags',
           queryParameters: {
@@ -204,6 +234,9 @@ class DioApiService implements ApiService {
           type: DioExceptionType.badResponse,
         );
       });
+
+      _tagsCache[cacheKey] = _CacheEntry(tags);
+      return tags;
     } catch (e) {
       developer.log('Error fetching tags (using local fallback tags): $e');
       return [
@@ -222,8 +255,17 @@ class DioApiService implements ApiService {
   /// Fetch top countries by station count.
   @override
   Future<List<Map<String, String>>> getTopCountries({int limit = 15}) async {
+    final cacheKey = 'top_countries_$limit';
+    if (_countriesCache.containsKey(cacheKey)) {
+      final entry = _countriesCache[cacheKey]!;
+      if (!entry.isExpired(_cacheDuration)) {
+        developer.log('Returning cached top countries for limit $limit');
+        return entry.data;
+      }
+    }
+
     try {
-      return await _requestWithFallback(() async {
+      final countries = await _requestWithFallback(() async {
         final response = await _dio.get(
           '$_baseUrl/json/countries',
           queryParameters: {
@@ -251,9 +293,24 @@ class DioApiService implements ApiService {
           type: DioExceptionType.badResponse,
         );
       });
+
+      _countriesCache[cacheKey] = _CacheEntry(countries);
+      return countries;
     } catch (e) {
       developer.log('Error fetching countries: $e');
       return [];
     }
+  }
+}
+
+/// Helper class representing a cache entry with a timestamp.
+class _CacheEntry<T> {
+  final T data;
+  final DateTime timestamp;
+
+  _CacheEntry(this.data) : timestamp = DateTime.now();
+
+  bool isExpired(Duration duration) {
+    return DateTime.now().difference(timestamp) > duration;
   }
 }

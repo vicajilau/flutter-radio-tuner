@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/radio_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
-import '../../models/station_model.dart';
 import 'station_tile.dart';
 import 'station_shimmer.dart';
 
@@ -19,10 +18,11 @@ class ExploreSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     debugPrint("Building ExploreSectionTitle");
     return SliverToBoxAdapter(
-      child: Selector<RadioProvider, (String, String)>(
-        selector: (context, provider) =>
-            (provider.selectedTag, provider.searchQuery),
-        builder: (context, data, child) {
+      child: Consumer(
+        builder: (context, ref, child) {
+          final data = ref.watch(
+            browserProvider.select((s) => (s.selectedTag, s.searchQuery)),
+          );
           final selectedTag = data.$1;
           final searchQuery = data.$2;
           final hasFilter = selectedTag.isNotEmpty || searchQuery.isNotEmpty;
@@ -61,29 +61,22 @@ class ExploreSectionTitle extends StatelessWidget {
 /// Renders the explore stations list section as a sliver.
 /// Listens selectively to `isLoadingData`, `stations`, `errorMessage`, `searchQuery` and `selectedTag`
 /// so that it only rebuilds when search states actually change.
-class ExploreStationsList extends StatelessWidget {
+class ExploreStationsList extends ConsumerWidget {
   final VoidCallback onReset;
 
   const ExploreStationsList({super.key, required this.onReset});
 
   @override
-  Widget build(BuildContext context) {
-    final isLoadingData = context.select<RadioProvider, bool>(
-      (p) => p.isLoadingData,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoadingData = ref.watch(
+      browserProvider.select((p) => p.isLoadingData),
     );
-    final stations = context.select<RadioProvider, List<Station>>(
-      (p) => p.stations,
+    final stations = ref.watch(browserProvider.select((p) => p.stations));
+    final errorMessage = ref.watch(
+      browserProvider.select((p) => p.errorMessage),
     );
-    final errorMessage = context.select<RadioProvider, String?>(
-      (p) => p.errorMessage,
-    );
-    final searchQuery = context.select<RadioProvider, String>(
-      (p) => p.searchQuery,
-    );
-    final selectedTag = context.select<RadioProvider, String>(
-      (p) => p.selectedTag,
-    );
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
+    final searchQuery = ref.watch(browserProvider.select((p) => p.searchQuery));
+    final selectedTag = ref.watch(browserProvider.select((p) => p.selectedTag));
 
     if (isLoadingData) {
       return const SliverToBoxAdapter(
@@ -132,7 +125,9 @@ class ExploreStationsList extends StatelessWidget {
                 const SizedBox(height: 28),
                 if (errorMessage != null)
                   GestureDetector(
-                    onTap: () => radioProvider.retryInitialization(),
+                    onTap: () => ref
+                        .read(browserProvider.notifier)
+                        .retryInitialization(),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,

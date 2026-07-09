@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/radio_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 
 /// Horizontal list widget for browsing and filtering radio stations by popular genres.
 /// Displays interactive chips indicating selection states.
-class GenreSelector extends StatelessWidget {
+class GenreSelector extends ConsumerWidget {
   const GenreSelector({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     debugPrint("Building GenreSelector");
-    final tags = context.select<RadioProvider, List<String>>((p) => p.tags);
-    final selectedTag = context.select<RadioProvider, String>(
-      (p) => p.selectedTag,
-    );
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
+    final tags = ref.watch(browserProvider.select((p) => p.tags));
+    final selectedTag = ref.watch(browserProvider.select((p) => p.selectedTag));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +43,8 @@ class GenreSelector extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: GestureDetector(
-                  onTap: () => radioProvider.search(tag: tag),
+                  onTap: () =>
+                      ref.read(browserProvider.notifier).search(tag: tag),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,

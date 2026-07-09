@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/station_model.dart';
 import '../../providers/favorites_provider.dart';
-import '../../providers/radio_provider.dart';
+import '../../providers/playback_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 import '../widgets/visualizer.dart';
@@ -13,15 +13,15 @@ import 'package:url_launcher/url_launcher.dart';
 /// Detailed audio player screen displaying album art/station favicon,
 /// buffering loaders, real-time waveform visualizer, sleep timer trigger,
 /// volume slider, and sharing capabilities.
-class PlayerScreen extends StatelessWidget {
+class PlayerScreen extends ConsumerWidget {
   const PlayerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final radioProvider = Provider.of<RadioProvider>(context);
-    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radioState = ref.watch(playbackProvider);
+    final favoritesState = ref.watch(favoritesProvider);
 
-    final Station? station = radioProvider.currentStation;
+    final Station? station = radioState.currentStation;
 
     // Fallback if no station is playing (shouldn't normally be reachable)
     if (station == null) {
@@ -31,9 +31,11 @@ class PlayerScreen extends StatelessWidget {
       );
     }
 
-    final bool isPlaying = radioProvider.isPlaying;
-    final bool isBuffering = radioProvider.isBuffering;
-    final bool isFavorited = favoritesProvider.isFavorite(station.stationuuid);
+    final bool isPlaying = radioState.isPlaying;
+    final bool isBuffering = radioState.isBuffering;
+    final bool isFavorited = favoritesState.favorites.any(
+      (s) => s.stationuuid == station.stationuuid,
+    );
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final systemUiOverlayStyle = isDark
@@ -188,26 +190,79 @@ class PlayerScreen extends StatelessWidget {
 
                             const SizedBox(height: 32),
 
-                            // Station Title and details
+                            // Station Title, Track details and metadata (ICY)
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 32.0,
                               ),
                               child: Column(
                                 children: [
-                                  Text(
-                                    station.name.trim(),
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: context.colors.textPrimary,
+                                  if (radioState.currentTrackTitle != null &&
+                                      radioState
+                                          .currentTrackTitle!
+                                          .isNotEmpty) ...[
+                                    // Highlighted current track/song title
+                                    Text(
+                                      radioState.currentTrackTitle!.trim(),
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: context.colors.primaryStart,
+                                            fontSize: 20,
+                                          ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Secondary Station Name
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.radio,
+                                          size: 13,
+                                          color: context.colors.textSecondary,
                                         ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            station.name.trim(),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.copyWith(
+                                                  color: context
+                                                      .colors
+                                                      .textSecondary,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 13,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ] else ...[
+                                    // Standard Station Name as main headline
+                                    Text(
+                                      station.name.trim(),
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: context.colors.textPrimary,
+                                          ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                   const SizedBox(height: 8),
                                   Text(
                                     [
@@ -259,7 +314,7 @@ class PlayerScreen extends StatelessWidget {
                               ),
                             ),
 
-                            if (radioProvider.isSleepTimerActive)
+                            if (radioState.isSleepTimerActive)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12.0),
                                 child: Row(
@@ -273,7 +328,7 @@ class PlayerScreen extends StatelessWidget {
                                     const SizedBox(width: 6),
                                     Text(
                                       context.l10n.sleepIn(
-                                        radioProvider.sleepTimeFormatted,
+                                        radioState.sleepTimeFormatted,
                                       ),
                                       style: TextStyle(
                                         color: context.colors.secondary,
@@ -283,8 +338,9 @@ class PlayerScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 6),
                                     GestureDetector(
-                                      onTap: () =>
-                                          radioProvider.cancelSleepTimer(),
+                                      onTap: () => ref
+                                          .read(playbackProvider.notifier)
+                                          .cancelSleepTimer(),
                                       child: Icon(
                                         Icons.cancel,
                                         color: context.colors.textPrimary
@@ -307,12 +363,14 @@ class PlayerScreen extends StatelessWidget {
                                 children: [
                                   IconButton(
                                     icon: Icon(
-                                      radioProvider.isMuted
+                                      radioState.isMuted
                                           ? Icons.volume_off
                                           : Icons.volume_down,
                                       color: context.colors.textSecondary,
                                     ),
-                                    onPressed: () => radioProvider.toggleMute(),
+                                    onPressed: () => ref
+                                        .read(playbackProvider.notifier)
+                                        .toggleMute(),
                                   ),
                                   Expanded(
                                     child: SliderTheme(
@@ -334,9 +392,10 @@ class PlayerScreen extends StatelessWidget {
                                             ),
                                       ),
                                       child: Slider(
-                                        value: radioProvider.volume,
-                                        onChanged: (val) =>
-                                            radioProvider.setVolume(val),
+                                        value: radioState.volume,
+                                        onChanged: (val) => ref
+                                            .read(playbackProvider.notifier)
+                                            .setVolume(val),
                                       ),
                                     ),
                                   ),
@@ -345,9 +404,9 @@ class PlayerScreen extends StatelessWidget {
                                       Icons.volume_up,
                                       color: context.colors.textSecondary,
                                     ),
-                                    onPressed: () => radioProvider.setVolume(
-                                      radioProvider.volume + 0.1,
-                                    ),
+                                    onPressed: () => ref
+                                        .read(playbackProvider.notifier)
+                                        .setVolume(radioState.volume + 0.1),
                                   ),
                                 ],
                               ),
@@ -445,14 +504,18 @@ class PlayerScreen extends StatelessWidget {
                                       size: 32,
                                     ),
                                     onPressed: () {
-                                      radioProvider.stopRadio();
+                                      ref
+                                          .read(playbackProvider.notifier)
+                                          .stopRadio();
                                       Navigator.pop(context);
                                     },
                                   ),
 
                                   // 3. Center Large Play/Pause Toggle
                                   GestureDetector(
-                                    onTap: () => radioProvider.togglePlay(),
+                                    onTap: () => ref
+                                        .read(playbackProvider.notifier)
+                                        .togglePlay(),
                                     child: Container(
                                       width: 80,
                                       height: 80,
@@ -500,17 +563,18 @@ class PlayerScreen extends StatelessWidget {
                                           : context.colors.textSecondary,
                                       size: 28,
                                     ),
-                                    onPressed: () => favoritesProvider
+                                    onPressed: () => ref
+                                        .read(favoritesProvider.notifier)
                                         .toggleFavorite(station),
                                   ),
 
                                   // 5. Sleep Timer Button
                                   IconButton(
                                     icon: Icon(
-                                      radioProvider.isSleepTimerActive
+                                      radioState.isSleepTimerActive
                                           ? Icons.alarm_on
                                           : Icons.alarm_add_outlined,
-                                      color: radioProvider.isSleepTimerActive
+                                      color: radioState.isSleepTimerActive
                                           ? context.colors.secondary
                                           : context.colors.textSecondary,
                                       size: 26,
@@ -519,9 +583,8 @@ class PlayerScreen extends StatelessWidget {
                                       showModalBottomSheet(
                                         context: context,
                                         backgroundColor: Colors.transparent,
-                                        builder: (context) => SleepTimerSheet(
-                                          radioProvider: radioProvider,
-                                        ),
+                                        builder: (context) =>
+                                            const SleepTimerSheet(),
                                       );
                                     },
                                   ),

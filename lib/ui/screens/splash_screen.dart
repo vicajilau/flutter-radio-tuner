@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../providers/radio_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 import 'home_screen.dart';
@@ -10,15 +10,15 @@ import 'home_screen.dart';
 /// Animated entry point screen of the application.
 /// Displays branding, resolves the active Radio Browser API server,
 /// and pre-loads initial data before navigating to the home dashboard.
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
 /// Animation and initialization logic state for [SplashScreen].
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -49,12 +49,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToHome() async {
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
-
     // Give the splash screen animations time to run, and wait for RadioProvider initialization
     await Future.wait([
       Future.delayed(const Duration(milliseconds: 2200)),
-      _waitForInitialization(radioProvider),
+      _waitForInitialization(),
     ]);
 
     if (!mounted) return;
@@ -72,11 +70,11 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Future<void> _waitForInitialization(RadioProvider provider) async {
-    if (provider.isInitialized) return;
+  Future<void> _waitForInitialization() async {
+    if (ref.read(browserProvider).isInitialized) return;
     // Wait until initialized or times out
     int elapsed = 0;
-    while (!provider.isInitialized && elapsed < 8000) {
+    while (!ref.read(browserProvider).isInitialized && elapsed < 8000) {
       await Future.delayed(const Duration(milliseconds: 100));
       elapsed += 100;
     }

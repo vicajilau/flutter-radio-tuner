@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../providers/radio_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/playback_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 import 'glass_container.dart';
 
 /// Bottom sheet widget allowing users to select or cancel a sleep timer duration.
 /// Schedules automatic playback stoppage based on chosen presets.
-class SleepTimerSheet extends StatelessWidget {
-  final RadioProvider radioProvider;
-
-  const SleepTimerSheet({super.key, required this.radioProvider});
+class SleepTimerSheet extends ConsumerWidget {
+  const SleepTimerSheet({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(playbackProvider.notifier);
+
     return GlassContainer(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(32),
@@ -52,36 +53,31 @@ class SleepTimerSheet extends StatelessWidget {
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _timerOption(context, context.l10n.cancel, null, radioProvider),
-              _timerOption(
-                context,
-                '5m',
-                const Duration(minutes: 5),
-                radioProvider,
-              ),
+              _timerOption(context, context.l10n.cancel, null, notifier),
+              _timerOption(context, '5m', const Duration(minutes: 5), notifier),
               _timerOption(
                 context,
                 '15m',
                 const Duration(minutes: 15),
-                radioProvider,
+                notifier,
               ),
               _timerOption(
                 context,
                 '30m',
                 const Duration(minutes: 30),
-                radioProvider,
+                notifier,
               ),
               _timerOption(
                 context,
                 '45m',
                 const Duration(minutes: 45),
-                radioProvider,
+                notifier,
               ),
               _timerOption(
                 context,
                 '60m',
                 const Duration(minutes: 60),
-                radioProvider,
+                notifier,
               ),
             ],
           ),
@@ -94,14 +90,14 @@ class SleepTimerSheet extends StatelessWidget {
     BuildContext context,
     String label,
     Duration? duration,
-    RadioProvider provider,
+    PlaybackNotifier notifier,
   ) {
     return InkWell(
       onTap: () {
         if (duration == null) {
-          provider.cancelSleepTimer();
+          notifier.cancelSleepTimer();
         } else {
-          provider.startSleepTimer(duration);
+          notifier.startSleepTimer(duration);
         }
         Navigator.pop(context);
       },

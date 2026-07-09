@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/station_model.dart';
-import '../../providers/radio_provider.dart';
+import '../../providers/playback_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
 /// Grid item / card widget displaying a favorited radio station.
 /// Renders the station favicon, name, country, and responds to tap actions
 /// to trigger instant audio playback.
-class FavoriteCard extends StatelessWidget {
+class FavoriteCard extends ConsumerWidget {
   final Station station;
 
   const FavoriteCard({super.key, required this.station});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     debugPrint("Building FavoriteCard");
-    final bool isCurrent = context.select<RadioProvider, bool>(
-      (p) => p.currentStation?.stationuuid == station.stationuuid,
+    final bool isCurrent = ref.watch(
+      playbackProvider.select(
+        (p) => p.currentStation?.stationuuid == station.stationuuid,
+      ),
     );
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
 
     return Padding(
       padding: const EdgeInsets.only(right: 14.0),
       child: GestureDetector(
-        onTap: () => radioProvider.playStation(station),
+        onTap: () => ref.read(playbackProvider.notifier).playStation(station),
         child: GlassContainer(
           width: 130,
           padding: const EdgeInsets.all(12),

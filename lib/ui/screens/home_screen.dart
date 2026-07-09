@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/favorites_provider.dart';
-import '../../providers/radio_provider.dart';
+import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
-import '../../models/station_model.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/favorite_card.dart';
@@ -16,15 +15,15 @@ import '../widgets/explore_stations.dart';
 
 /// Main landing screen of the application containing the dashboard,
 /// search bar, popular genres, recently played list, and stations list.
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 /// State management for [HomeScreen] that handles focus, input controllers, and search debouncing.
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   Timer? _debounce;
@@ -40,12 +39,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _resetSearch() {
     _debounce?.cancel();
     _searchController.clear();
-    Provider.of<RadioProvider>(context, listen: false).clearFilters();
+    ref.read(browserProvider.notifier).clearFilters();
   }
 
   @override
   Widget build(BuildContext context) {
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final systemUiOverlayStyle = isDark
         ? SystemUiOverlayStyle.light.copyWith(
@@ -149,11 +147,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           onChanged: (val) {
                             _debounce?.cancel();
                             if (val.isEmpty) {
-                              radioProvider.search(query: val);
+                              ref
+                                  .read(browserProvider.notifier)
+                                  .search(query: val);
                             } else {
                               _debounce = Timer(
                                 const Duration(milliseconds: 500),
-                                () => radioProvider.search(query: val),
+                                () => ref
+                                    .read(browserProvider.notifier)
+                                    .search(query: val),
                               );
                             }
                           },
@@ -201,9 +203,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Favorites Deck (horizontal card scroll)
                   SliverToBoxAdapter(
-                    child: Selector<FavoritesProvider, List<Station>>(
-                      selector: (context, provider) => provider.favorites,
-                      builder: (context, favorites, child) {
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final favorites = ref.watch(
+                          favoritesProvider.select((s) => s.favorites),
+                        );
                         if (favorites.isEmpty) {
                           return const SizedBox.shrink();
                         }
@@ -249,9 +253,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Recently Played History
                   SliverToBoxAdapter(
-                    child: Selector<RadioProvider, List<Station>>(
-                      selector: (context, provider) => provider.historyStations,
-                      builder: (context, historyStations, child) {
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final historyStations = ref.watch(
+                          browserProvider.select((s) => s.historyStations),
+                        );
                         if (historyStations.isEmpty) {
                           return const SizedBox.shrink();
                         }
@@ -279,8 +285,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      // Call clear history on history service
-                                      radioProvider.clearFilters();
+                                      ref
+                                          .read(browserProvider.notifier)
+                                          .clearFilters();
                                     },
                                     style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero,
@@ -317,10 +324,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Error Message banner
                   SliverToBoxAdapter(
-                    child: Selector<RadioProvider, (String?, bool)>(
-                      selector: (context, provider) =>
-                          (provider.errorMessage, provider.stations.isNotEmpty),
-                      builder: (context, data, child) {
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final data = ref.watch(
+                          browserProvider.select(
+                            (s) => (s.errorMessage, s.stations.isNotEmpty),
+                          ),
+                        );
                         final errorMessage = data.$1;
                         final hasStations = data.$2;
                         if (errorMessage == null || !hasStations) {

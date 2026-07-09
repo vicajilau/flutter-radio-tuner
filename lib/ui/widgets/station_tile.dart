@@ -1,43 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/station_model.dart';
 import '../../providers/favorites_provider.dart';
-import '../../providers/radio_provider.dart';
+import '../../providers/playback_provider.dart';
 import '../../core/theme/app_theme.dart';
 import 'glass_container.dart';
 
 /// List tile widget representing a radio station in list views.
 /// Renders favicon, title, tags, country code, votes count,
 /// favorite toggle button, and a mini active visualizer bar if playing.
-class StationTile extends StatelessWidget {
+class StationTile extends ConsumerWidget {
   final Station station;
 
   const StationTile({super.key, required this.station});
 
   @override
-  Widget build(BuildContext context) {
-    final bool isCurrent = context.select<RadioProvider, bool>(
-      (p) => p.currentStation?.stationuuid == station.stationuuid,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool isCurrent = ref.watch(
+      playbackProvider.select(
+        (p) => p.currentStation?.stationuuid == station.stationuuid,
+      ),
     );
-    final bool isPlaying = context.select<RadioProvider, bool>(
-      (p) => isCurrent && p.isPlaying,
+    final bool isPlaying = ref.watch(
+      playbackProvider.select(
+        (p) =>
+            p.currentStation?.stationuuid == station.stationuuid && p.isPlaying,
+      ),
     );
-    final bool isBuffering = context.select<RadioProvider, bool>(
-      (p) => isCurrent && p.isBuffering,
+    final bool isBuffering = ref.watch(
+      playbackProvider.select(
+        (p) =>
+            p.currentStation?.stationuuid == station.stationuuid &&
+            p.isBuffering,
+      ),
     );
-    final bool isFavorited = context.select<FavoritesProvider, bool>(
-      (p) => p.isFavorite(station.stationuuid),
-    );
-    final radioProvider = Provider.of<RadioProvider>(context, listen: false);
-    final favoritesProvider = Provider.of<FavoritesProvider>(
-      context,
-      listen: false,
+    final bool isFavorited = ref.watch(
+      favoritesProvider.select(
+        (s) => s.favorites.any((f) => f.stationuuid == station.stationuuid),
+      ),
     );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: GestureDetector(
-        onTap: () => radioProvider.playStation(station),
+        onTap: () => ref.read(playbackProvider.notifier).playStation(station),
         child: GlassContainer(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           opacity: isCurrent ? 0.12 : 0.04,
@@ -98,127 +104,110 @@ class StationTile extends StatelessWidget {
               ),
               const SizedBox(width: 16),
 
-              // Station Information
+              // Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       station.name.trim(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
                         color: isCurrent
                             ? context.colors.primaryStart
                             : context.colors.textPrimary,
-                        fontWeight: isCurrent
-                            ? FontWeight.bold
-                            : FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      [
-                        if (station.language.isNotEmpty)
-                          station.language.split(',').first.trim(),
-                        if (station.country.isNotEmpty) station.country,
-                      ].join(' • '),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isCurrent
-                            ? context.colors.textPrimary.withValues(alpha: 0.7)
-                            : context.colors.textSecondary,
+                      station.tags.isNotEmpty
+                          ? station.tags
+                                .split(',')
+                                .take(3)
+                                .join(', ')
+                                .toLowerCase()
+                          : (station.country.isNotEmpty
+                                ? station.country
+                                : 'Internet Radio'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.colors.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    // Tags row
-                    if (station.tagList.isNotEmpty)
-                      SizedBox(
-                        height: 18,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: station.tagList.take(3).length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 6),
-                          itemBuilder: (context, index) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isCurrent
-                                    ? context.colors.primaryStart.withValues(
-                                        alpha: 0.15,
-                                      )
-                                    : context.colors.textPrimary.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                station.tagList[index].toLowerCase(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: context.colors.textPrimary.withValues(
-                                    alpha: 0.7,
-                                  ),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            );
-                          },
+                    Row(
+                      children: [
+                        if (station.bitrate > 0) ...[
+                          _buildBadge(context, '${station.bitrate} kbps'),
+                          const SizedBox(width: 8),
+                        ],
+                        Icon(
+                          Icons.thumb_up_alt_outlined,
+                          size: 11,
+                          color: context.colors.textMuted,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          station.votes.toString(),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
 
-              // Action Buttons / Status Indicator
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Play / Loading status icon
-                  if (isCurrent) ...[
-                    if (isBuffering)
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            context.colors.primaryStart,
-                          ),
-                        ),
-                      )
-                    else if (isPlaying)
-                      _buildEqualizerIndicator(context)
-                    else
-                      Icon(
-                        Icons.pause_circle_outline,
-                        color: context.colors.primaryStart,
-                        size: 24,
-                      ),
-                    const SizedBox(width: 12),
-                  ],
-
-                  // Favorite Button
-                  IconButton(
-                    icon: Icon(
-                      isFavorited ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorited
-                          ? Colors.redAccent
-                          : context.colors.textMuted,
-                      size: 22,
-                    ),
-                    onPressed: () => favoritesProvider.toggleFavorite(station),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    splashRadius: 20,
+              // Playing indicator or Favorite button
+              if (isCurrent)
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Center(
+                    child: isBuffering
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                context.colors.primaryStart,
+                              ),
+                            ),
+                          )
+                        : (isPlaying
+                              ? _buildPlayingWave(context)
+                              : Icon(
+                                  Icons.play_arrow_rounded,
+                                  color: context.colors.primaryStart,
+                                  size: 24,
+                                )),
                   ),
-                ],
-              ),
+                )
+              else
+                IconButton(
+                  icon: Icon(
+                    isFavorited ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorited
+                        ? Colors.redAccent
+                        : context.colors.textMuted,
+                    size: 20,
+                  ),
+                  onPressed: () => ref
+                      .read(favoritesProvider.notifier)
+                      .toggleFavorite(station),
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(8),
+                  splashRadius: 20,
+                ),
             ],
           ),
         ),
@@ -226,61 +215,53 @@ class StationTile extends StatelessWidget {
     );
   }
 
-  Widget _buildEqualizerIndicator(BuildContext context) {
-    return SizedBox(
-      width: 16,
-      height: 16,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildEqualizerBar(context, 5.0, const Duration(milliseconds: 500)),
-          _buildEqualizerBar(context, 12.0, const Duration(milliseconds: 400)),
-          _buildEqualizerBar(context, 8.0, const Duration(milliseconds: 600)),
-        ],
+  Widget _buildBadge(BuildContext context, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: context.colors.textPrimary.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: context.colors.textPrimary.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: context.colors.textSecondary,
+        ),
       ),
     );
   }
 
-  Widget _buildEqualizerBar(
-    BuildContext context,
-    double height,
-    Duration duration,
-  ) {
-    return _EqualizerBarAnimation(maxHeight: height, duration: duration);
+  Widget _buildPlayingWave(BuildContext context) {
+    return _AnimatedMiniVisualizer(color: context.colors.primaryStart);
   }
 }
 
-/// Internal widget to animate a single vertical equalizer frequency bar.
-class _EqualizerBarAnimation extends StatefulWidget {
-  final double maxHeight;
-  final Duration duration;
-
-  const _EqualizerBarAnimation({
-    required this.maxHeight,
-    required this.duration,
-  });
+class _AnimatedMiniVisualizer extends StatefulWidget {
+  final Color color;
+  const _AnimatedMiniVisualizer({required this.color});
 
   @override
-  State<_EqualizerBarAnimation> createState() => _EqualizerBarAnimationState();
+  State<_AnimatedMiniVisualizer> createState() =>
+      _AnimatedMiniVisualizerState();
 }
 
-/// State management for the single equalizer frequency bar animation controller.
-class _EqualizerBarAnimationState extends State<_EqualizerBarAnimation>
+class _AnimatedMiniVisualizerState extends State<_AnimatedMiniVisualizer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _animation;
+  final List<double> _heights = [12.0, 18.0, 8.0, 14.0];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-
-    _animation = Tween<double>(
-      begin: 2.0,
-      end: widget.maxHeight,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _controller.repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -292,15 +273,27 @@ class _EqualizerBarAnimationState extends State<_EqualizerBarAnimation>
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _animation,
+      animation: _controller,
       builder: (context, child) {
-        return Container(
-          width: 3.5,
-          height: _animation.value,
-          decoration: BoxDecoration(
-            color: context.colors.primaryStart,
-            borderRadius: BorderRadius.circular(2),
-          ),
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: List.generate(4, (index) {
+            final double value = (index % 2 == 0)
+                ? _controller.value
+                : 1.0 - _controller.value;
+            final double h = 4 + (_heights[index] - 4) * value;
+
+            return Container(
+              width: 3.5,
+              height: h,
+              margin: const EdgeInsets.only(left: 2.5),
+              decoration: BoxDecoration(
+                color: widget.color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            );
+          }),
         );
       },
     );

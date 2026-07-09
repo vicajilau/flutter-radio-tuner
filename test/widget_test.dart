@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_radio_tuner/models/station_model.dart';
 import 'package:flutter_radio_tuner/providers/favorites_provider.dart';
-import 'package:flutter_radio_tuner/providers/radio_provider.dart';
+import 'package:flutter_radio_tuner/providers/playback_provider.dart';
+import 'package:flutter_radio_tuner/providers/browser_provider.dart';
 import 'package:flutter_radio_tuner/core/repositories/station_repository.dart';
+import 'package:flutter_radio_tuner/core/di/service_locator.dart';
 
 class MockStationRepository implements StationRepository {
   List<Station> favorites = [];
@@ -140,55 +143,121 @@ void main() {
       );
 
       final mockRepo = MockStationRepository();
-      final provider = FavoritesProvider(mockRepo);
+      locator.registerSingleton<StationRepository>(mockRepo);
 
-      while (provider.isLoading) {
+      final container = ProviderContainer();
+      addTearDown(() {
+        container.dispose();
+        locator.unregister<StationRepository>();
+      });
+
+      final notifier = container.read(favoritesProvider.notifier);
+
+      // Wait for future microtask loading favorites
+      await Future.delayed(Duration.zero);
+      while (container.read(favoritesProvider).isLoading) {
         await Future.delayed(const Duration(milliseconds: 10));
       }
 
-      expect(provider.isFavorite(station.stationuuid), isFalse);
+      expect(notifier.isFavorite(station.stationuuid), isFalse);
 
-      await provider.toggleFavorite(station);
-      expect(provider.isFavorite(station.stationuuid), isTrue);
+      await notifier.toggleFavorite(station);
+      expect(notifier.isFavorite(station.stationuuid), isTrue);
 
-      await provider.toggleFavorite(station);
-      expect(provider.isFavorite(station.stationuuid), isFalse);
+      await notifier.toggleFavorite(station);
+      expect(notifier.isFavorite(station.stationuuid), isFalse);
     });
   });
 
-  group('Radio Provider Basic Tests', () {
+  group('Playback Provider Basic Tests', () {
     test('Should initialize with default volume', () async {
       final mockRepo = MockStationRepository();
-      final provider = RadioProvider(mockRepo);
+      locator.registerSingleton<StationRepository>(mockRepo);
 
-      while (provider.isLoadingData) {
-        await Future.delayed(const Duration(milliseconds: 10));
-      }
+      final container = ProviderContainer();
+      addTearDown(() {
+        container.dispose();
+        locator.unregister<StationRepository>();
+      });
 
-      // Default volume is 1.0 as synced from the player state
-      expect(provider.volume, 1.0);
-      expect(provider.isMuted, isFalse);
+      final notifier = container.read(playbackProvider.notifier);
 
-      provider.setVolume(0.5);
-      expect(provider.volume, 0.5);
+      await Future.delayed(Duration.zero);
+
+      // Default volume is 1.0 in test environments
+      expect(container.read(playbackProvider).volume, 1.0);
+      expect(container.read(playbackProvider).isMuted, isFalse);
+
+      notifier.setVolume(0.5);
+      expect(container.read(playbackProvider).volume, 0.5);
     });
 
     test('Should set and clear sleep timer state correctly', () async {
       final mockRepo = MockStationRepository();
-      final provider = RadioProvider(mockRepo);
+      locator.registerSingleton<StationRepository>(mockRepo);
 
-      while (provider.isLoadingData) {
+      final container = ProviderContainer();
+      addTearDown(() {
+        container.dispose();
+        locator.unregister<StationRepository>();
+      });
+
+      final notifier = container.read(playbackProvider.notifier);
+
+      await Future.delayed(Duration.zero);
+
+      expect(container.read(playbackProvider).isSleepTimerActive, isFalse);
+
+      notifier.startSleepTimer(const Duration(minutes: 10));
+      expect(container.read(playbackProvider).isSleepTimerActive, isTrue);
+      expect(container.read(playbackProvider).sleepTimeLeftSeconds, 600);
+
+      notifier.cancelSleepTimer();
+      expect(container.read(playbackProvider).isSleepTimerActive, isFalse);
+    });
+  });
+
+  group('Browser Provider Basic Tests', () {
+    test('Should initialize data and popular stations', () async {
+      final mockRepo = MockStationRepository();
+      final station = Station(
+        stationuuid: 'pop-1',
+        name: 'Popular Radio',
+        url: 'http://pop.url',
+        urlResolved: 'http://pop.url',
+        homepage: '',
+        favicon: '',
+        tags: '',
+        country: '',
+        countrycode: '',
+        state: '',
+        language: '',
+        codec: 'MP3',
+        bitrate: 128,
+        votes: 10,
+        clickcount: 5,
+      );
+      mockRepo.popular = [station];
+      locator.registerSingleton<StationRepository>(mockRepo);
+
+      final container = ProviderContainer();
+      addTearDown(() {
+        container.dispose();
+        locator.unregister<StationRepository>();
+      });
+
+      int elapsed = 0;
+      while (!container.read(browserProvider).isInitialized && elapsed < 1000) {
         await Future.delayed(const Duration(milliseconds: 10));
+        elapsed += 10;
       }
 
-      expect(provider.isSleepTimerActive, isFalse);
-
-      provider.startSleepTimer(const Duration(minutes: 10));
-      expect(provider.isSleepTimerActive, isTrue);
-      expect(provider.sleepTimeLeftSeconds, 600);
-
-      provider.cancelSleepTimer();
-      expect(provider.isSleepTimerActive, isFalse);
+      expect(container.read(browserProvider).isInitialized, isTrue);
+      expect(container.read(browserProvider).stations.length, 1);
+      expect(
+        container.read(browserProvider).stations.first.name,
+        'Popular Radio',
+      );
     });
   });
 }

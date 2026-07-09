@@ -1,52 +1,72 @@
-import 'package:flutter/foundation.dart';
-import '../../models/station_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/di/service_locator.dart';
 import '../core/repositories/station_repository.dart';
+import '../models/station_model.dart';
 
-/// ChangeNotifier that manages the user's favorite radio stations.
-/// Observes, updates, and persists favorite selections across app launches.
-class FavoritesProvider with ChangeNotifier {
-  final StationRepository _repository;
-  List<Station> _favorites = [];
-  bool _isLoading = false;
+/// State class containing the favorites data and loading indicator.
+class FavoritesState {
+  final List<Station> favorites;
+  final bool isLoading;
 
-  List<Station> get favorites => _favorites;
-  bool get isLoading => _isLoading;
+  const FavoritesState({required this.favorites, required this.isLoading});
 
-  FavoritesProvider(this._repository) {
-    loadFavorites();
+  FavoritesState copyWith({List<Station>? favorites, bool? isLoading}) {
+    return FavoritesState(
+      favorites: favorites ?? this.favorites,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
+}
+
+/// Notifier that manages the user's favorite radio stations.
+/// Persists favorite selections across app launches using [StationRepository].
+class FavoritesNotifier extends Notifier<FavoritesState> {
+  late final StationRepository _repository;
+
+  @override
+  FavoritesState build() {
+    _repository = locator<StationRepository>();
+    // Load favorites from local storage
+    Future.microtask(() => loadFavorites());
+    return const FavoritesState(favorites: [], isLoading: true);
   }
 
-  /// Load favorites from local storage.
+  /// Load favorites from repository.
   Future<void> loadFavorites() async {
-    _isLoading = true;
-    notifyListeners();
-
+    state = state.copyWith(isLoading: true);
     try {
-      _favorites = await _repository.getFavorites();
+      final favoritesList = await _repository.getFavorites();
+      state = state.copyWith(favorites: favoritesList, isLoading: false);
     } catch (_) {
-      _favorites = [];
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      state = state.copyWith(favorites: [], isLoading: false);
     }
   }
 
   /// Check if a station is favorited.
   bool isFavorite(String stationuuid) {
-    return _favorites.any((s) => s.stationuuid == stationuuid);
+    return state.favorites.any((s) => s.stationuuid == stationuuid);
   }
 
   /// Toggle favorite status of a station.
   Future<void> toggleFavorite(Station station) async {
     final bool favorited = isFavorite(station.stationuuid);
     if (favorited) {
-      _favorites.removeWhere((s) => s.stationuuid == station.stationuuid);
-      notifyListeners();
+      final updatedList = state.favorites
+          .where((s) => s.stationuuid != station.stationuuid)
+          .toList();
+      state = state.copyWith(favorites: updatedList);
       await _repository.removeFavorite(station.stationuuid);
     } else {
-      _favorites.add(station);
-      notifyListeners();
+      final updatedList = [...state.favorites, station];
+      state = state.copyWith(favorites: updatedList);
       await _repository.addFavorite(station);
     }
   }
 }
+
+/// Global provider for the favorites state.
+final favoritesProvider = NotifierProvider<FavoritesNotifier, FavoritesState>(
+  () {
+    return FavoritesNotifier();
+  },
+);

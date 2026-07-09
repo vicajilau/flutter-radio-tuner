@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/favorites_provider.dart';
-import '../../providers/radio_provider.dart';
+import '../../providers/playback_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
 import '../screens/player_screen.dart';
@@ -10,24 +10,38 @@ import 'glass_container.dart';
 /// Persistent mini player widget displayed at the bottom of the home screen.
 /// Provides access to quick playback controls (play/pause, favorite toggle)
 /// and displays the current station name with a sliding transition to the full player.
-class MiniPlayer extends StatelessWidget {
+class MiniPlayer extends ConsumerWidget {
   const MiniPlayer({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final radioProvider = Provider.of<RadioProvider>(context);
-    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radioState = ref.watch(playbackProvider);
+    final favoritesState = ref.watch(favoritesProvider);
 
-    final currentStation = radioProvider.currentStation;
+    final currentStation = radioState.currentStation;
     if (currentStation == null) return const SizedBox.shrink();
 
-    final isPlaying = radioProvider.isPlaying;
-    final isBuffering = radioProvider.isBuffering;
-    final isFavorited = favoritesProvider.isFavorite(
-      currentStation.stationuuid,
+    final isPlaying = radioState.isPlaying;
+    final isBuffering = radioState.isBuffering;
+    final isFavorited = favoritesState.favorites.any(
+      (s) => s.stationuuid == currentStation.stationuuid,
     );
     final bool isPortrait =
         MediaQuery.orientationOf(context) == Orientation.portrait;
+
+    final String displayTitle =
+        (radioState.currentTrackTitle != null &&
+            radioState.currentTrackTitle!.isNotEmpty)
+        ? radioState.currentTrackTitle!
+        : currentStation.name;
+
+    final String displaySubtitle =
+        (radioState.currentTrackTitle != null &&
+            radioState.currentTrackTitle!.isNotEmpty)
+        ? '${currentStation.name}  •  ${isBuffering ? context.l10n.bufferingStream : (isPlaying ? context.l10n.playingLive : context.l10n.paused)}'
+        : (isBuffering
+              ? context.l10n.bufferingStream
+              : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}');
 
     return SafeArea(
       top: false,
@@ -110,14 +124,14 @@ class MiniPlayer extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // Station Title / Bitrate
+                // Station Title / Bitrate / Track details
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        currentStation.name.trim(),
+                        displayTitle.trim(),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontSize: 14,
@@ -128,9 +142,7 @@ class MiniPlayer extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isBuffering
-                            ? context.l10n.bufferingStream
-                            : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}',
+                        displaySubtitle,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 11,
                           color: isBuffering
@@ -161,8 +173,9 @@ class MiniPlayer extends StatelessWidget {
                               : context.colors.textMuted,
                           size: 20,
                         ),
-                        onPressed: () =>
-                            favoritesProvider.toggleFavorite(currentStation),
+                        onPressed: () => ref
+                            .read(favoritesProvider.notifier)
+                            .toggleFavorite(currentStation),
                         constraints: const BoxConstraints(),
                         padding: const EdgeInsets.all(8),
                         splashRadius: 20,
@@ -172,7 +185,8 @@ class MiniPlayer extends StatelessWidget {
 
                     // Play/Pause button
                     GestureDetector(
-                      onTap: () => radioProvider.togglePlay(),
+                      onTap: () =>
+                          ref.read(playbackProvider.notifier).togglePlay(),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -206,7 +220,8 @@ class MiniPlayer extends StatelessWidget {
                         color: context.colors.textMuted,
                         size: 20,
                       ),
-                      onPressed: () => radioProvider.stopRadio(),
+                      onPressed: () =>
+                          ref.read(playbackProvider.notifier).stopRadio(),
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(8),
                       splashRadius: 20,
