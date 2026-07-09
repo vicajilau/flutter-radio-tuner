@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/di/service_locator.dart';
+import '../core/di/di_providers.dart';
 import '../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
@@ -99,8 +99,8 @@ class BrowserNotifier extends Notifier<BrowserState> {
 
   @override
   BrowserState build() {
-    // Resolve the station repository singleton via GetIt locator
-    _repository = locator<StationRepository>();
+    // Resolve the station repository singleton via Riverpod DI
+    _repository = ref.watch(stationRepositoryProvider);
 
     // Defer initial data load so it runs after the provider is fully built
     Future.microtask(() {

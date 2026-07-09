@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_radio_tuner/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/di/service_locator.dart';
 import 'core/services/audio_initializer.dart';
 import 'core/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await setupLocator(); // Initialize GetIt DI
   await AudioInitializer.initialize();
   runApp(const ProviderScope(child: RadioApp()));
 }

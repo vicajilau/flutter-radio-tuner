@@ -6,7 +6,7 @@ import 'package:flutter_radio_tuner/providers/favorites_provider.dart';
 import 'package:flutter_radio_tuner/providers/playback_provider.dart';
 import 'package:flutter_radio_tuner/providers/browser_provider.dart';
 import 'package:flutter_radio_tuner/core/repositories/station_repository.dart';
-import 'package:flutter_radio_tuner/core/di/service_locator.dart';
+import 'package:flutter_radio_tuner/core/di/di_providers.dart';
 
 class MockStationRepository implements StationRepository {
   List<Station> favorites = [];
@@ -143,12 +143,11 @@ void main() {
       );
 
       final mockRepo = MockStationRepository();
-      locator.registerSingleton<StationRepository>(mockRepo);
-
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [stationRepositoryProvider.overrideWithValue(mockRepo)],
+      );
       addTearDown(() {
         container.dispose();
-        locator.unregister<StationRepository>();
       });
 
       final notifier = container.read(favoritesProvider.notifier);
@@ -172,12 +171,11 @@ void main() {
   group('Playback Provider Basic Tests', () {
     test('Should initialize with default volume', () async {
       final mockRepo = MockStationRepository();
-      locator.registerSingleton<StationRepository>(mockRepo);
-
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [stationRepositoryProvider.overrideWithValue(mockRepo)],
+      );
       addTearDown(() {
         container.dispose();
-        locator.unregister<StationRepository>();
       });
 
       final notifier = container.read(playbackProvider.notifier);
@@ -194,12 +192,11 @@ void main() {
 
     test('Should set and clear sleep timer state correctly', () async {
       final mockRepo = MockStationRepository();
-      locator.registerSingleton<StationRepository>(mockRepo);
-
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [stationRepositoryProvider.overrideWithValue(mockRepo)],
+      );
       addTearDown(() {
         container.dispose();
-        locator.unregister<StationRepository>();
       });
 
       final notifier = container.read(playbackProvider.notifier);
@@ -238,12 +235,11 @@ void main() {
         clickcount: 5,
       );
       mockRepo.popular = [station];
-      locator.registerSingleton<StationRepository>(mockRepo);
-
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [stationRepositoryProvider.overrideWithValue(mockRepo)],
+      );
       addTearDown(() {
         container.dispose();
-        locator.unregister<StationRepository>();
       });
 
       int elapsed = 0;

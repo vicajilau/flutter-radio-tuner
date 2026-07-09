@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/di/service_locator.dart';
+import '../core/di/di_providers.dart';
 import '../core/repositories/station_repository.dart';
 import '../models/station_model.dart';
 
@@ -25,7 +25,7 @@ class FavoritesNotifier extends Notifier<FavoritesState> {
 
   @override
   FavoritesState build() {
-    _repository = locator<StationRepository>();
+    _repository = ref.watch(stationRepositoryProvider);
     // Load favorites from local storage
     Future.microtask(() => loadFavorites());
     return const FavoritesState(favorites: [], isLoading: true);

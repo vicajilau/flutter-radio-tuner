@@ -7,7 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../core/di/service_locator.dart';
+import '../core/di/di_providers.dart';
 import '../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
@@ -147,8 +147,8 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
 
   @override
   PlaybackState build() {
-    // Resolve repository dependency via GetIt locator
-    _repository = locator<StationRepository>();
+    // Resolve repository dependency via Riverpod DI
+    _repository = ref.watch(stationRepositoryProvider);
 
     // Dispose listeners, streams, and player hardware resources when provider is destroyed
     ref.onDispose(() {
