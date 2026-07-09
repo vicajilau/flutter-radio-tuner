@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -154,17 +153,8 @@ class Playback extends _$Playback {
     // Resolve repository dependency via Riverpod DI
     _repository = ref.watch(stationRepositoryProvider);
 
-    // Monitor app lifecycle to stop audio playback when user terminates/detaches the app
-    final lifecycleListener = AppLifecycleListener(
-      onDetach: () {
-        debugPrint('App is detaching, stopping audio player');
-        _player.stop();
-      },
-    );
-
     // Dispose listeners, streams, and player hardware resources when provider is destroyed
     ref.onDispose(() {
-      lifecycleListener.dispose();
       _connectivitySubscription?.cancel();
       _sleepTimer?.cancel();
       _countdownTimer?.cancel();
@@ -359,6 +349,7 @@ class Playback extends _$Playback {
 
       try {
         final session = await AudioSession.instance;
+        await session.configure(const AudioSessionConfiguration.music());
         await session.setActive(true);
 
         await _player.setVolume(state.volume);
