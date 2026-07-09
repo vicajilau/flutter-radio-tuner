@@ -107,26 +107,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  context.l10n.appTitle,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .displayLarge
-                                      ?.copyWith(fontSize: 30),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  context.l10n.streamWorldsMusic,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: context.colors.textSecondary,
-                                      ),
-                                ),
-                              ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    context.l10n.appTitle,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displayLarge
+                                        ?.copyWith(fontSize: 30),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    context.l10n.streamWorldsMusic,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: context.colors.textSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 16),
                             // Top Logo Indicator
                             Image.asset(
                               'assets/icon/app_icon_transparent.png',
