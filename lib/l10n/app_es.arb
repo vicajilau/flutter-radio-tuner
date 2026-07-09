@@ -1,0 +1,72 @@
+{
+  "@@locale": "es",
+  "searchPlaceholder": "Buscar emisoras, géneros, etiquetas...",
+  "popularGenres": "Géneros populares",
+  "favoriteStations": "Emisoras favoritas",
+  "recentlyPlayed": "Escuchadas recientemente",
+  "recommendedStations": "Emisoras recomendadas",
+  "searchResults": "Resultados de búsqueda",
+  "selectGenreToExplore": "Selecciona un género para empezar a explorar",
+  "noFavoritesYet": "Aún no hay emisoras favoritas",
+  "favoritesSubtitle": "Tus emisoras favoritas aparecerán aquí",
+  "noRecentlyPlayed": "No hay emisoras escuchadas recientemente",
+  "recentlyPlayedSubtitle": "Las emisoras que escuches aparecerán aquí",
+  "noRecommended": "No hay emisoras recomendadas",
+  "recommendedSubtitle": "Vuelve más tarde para ver recomendaciones",
+  "nowStreaming": "TRANSMITIENDO AHORA",
+  "noStationSelected": "Ninguna emisora seleccionada.",
+  "sleepIn": "Apagar en {time}",
+  "@sleepIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "noWebsite": "No hay sitio web disponible para esta emisora.",
+  "invalidWebsite": "URL del sitio web de la emisora inválida.",
+  "couldNotOpen": "No se pudo abrir: {url}",
+  "@couldNotOpen": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "clearSearchAndFilters": "Limpiar búsqueda y filtros",
+  "noStationsFoundForQuery": "No se encontraron emisoras que coincidan con \"{query}\"",
+  "@noStationsFoundForQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "noStationsFoundForCategory": "No se encontraron emisoras en la categoría \"{tag}\"",
+  "@noStationsFoundForCategory": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "noStationsFoundForFilters": "No se encontraron emisoras que coincidan con los filtros actuales",
+  "sleepTimer": "TEMPORIZADOR",
+  "sleepTimerSubtitle": "Detener reproducción automáticamente tras transcurrir el tiempo",
+  "cancel": "Cancelar",
+  "connecting": "Conectando...",
+  "buffering": "Búfer...",
+  "playingLive": "Transmitiendo en vivo",
+  "paused": "Pausado",
+  "bufferingStream": "Búfer de transmisión...",
+  "resolvingNodes": "Resolviendo nodos de radio...",
+  "connectionError": "Error de conexión",
+  "noStationsFound": "No se encontraron emisoras",
+  "searchEmptySubtitle": "Intenta buscar un nombre, género o etiqueta diferente.",
+  "noStationsAvailable": "No hay emisoras disponibles en este momento.",
+  "retryConnection": "Reintentar conexión",
+  "reset": "Restablecer",
+  "appTagline": "S I N T O N I Z A D O R   D E   R A D I O   P R E M I U M",
+  "streamWorldsMusic": "Escucha la música del mundo",
+  "appTitle": "Sintonizador de Radio"
+}
