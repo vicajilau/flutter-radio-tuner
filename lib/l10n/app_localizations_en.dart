@@ -134,7 +134,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get appTagline => 'P R E M I U M   R A D I O   T U N E R';
+  String get appTagline => 'PREMIUM RADIO TUNER';
 
   @override
   String get streamWorldsMusic => 'Stream the world\'s music';

@@ -172,7 +172,7 @@
   "@reset": {
     "description": "Reset search text button"
   },
-  "appTagline": "P R E M I U M   R A D I O   T U N E R",
+  "appTagline": "PREMIUM RADIO TUNER",
   "@appTagline": {
     "description": "Slogan tagline of the application"
   },

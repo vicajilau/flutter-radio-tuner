@@ -137,8 +137,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get reset => 'Restablecer';
 
   @override
-  String get appTagline =>
-      'S I N T O N I Z A D O R   D E   R A D I O   P R E M I U M';
+  String get appTagline => 'SINTONIZADOR DE RADIO PREMIUM';
 
   @override
   String get streamWorldsMusic => 'Escucha la música del mundo';

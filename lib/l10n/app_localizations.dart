@@ -329,7 +329,7 @@ abstract class AppLocalizations {
   /// Slogan tagline of the application
   ///
   /// In en, this message translates to:
-  /// **'P R E M I U M   R A D I O   T U N E R'**
+  /// **'PREMIUM RADIO TUNER'**
   String get appTagline;
 
   /// Slogan displayed on the home page app bar header

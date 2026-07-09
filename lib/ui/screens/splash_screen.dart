@@ -208,11 +208,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         const SizedBox(height: 8),
                         Text(
                           context.l10n.appTagline,
+                          textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 fontSize: 10,
                                 color: context.colors.primaryStart,
-                                letterSpacing: 2.5,
+                                letterSpacing: 4.5,
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
