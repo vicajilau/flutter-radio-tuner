@@ -343,6 +343,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Radio Tuner'**
   String get appTitle;
+
+  /// Error message when device has no internet access
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternet;
+
+  /// Buffering status when internet reconnection is active
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting...'**
+  String get reconnecting;
+
+  /// Error message when radio stream fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to play this station. The stream may be offline.'**
+  String get streamOffline;
 }
 
 class _AppLocalizationsDelegate

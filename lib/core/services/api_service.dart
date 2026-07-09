@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../../models/station_model.dart';
 
@@ -74,14 +74,14 @@ class DioApiService implements ApiService {
           resolved.shuffle();
           _availableServers = resolved;
           _currentServerIndex = 0;
-          developer.log(
+          debugPrint(
             'Resolved ${resolved.length} active Radio Browser API servers. Starting with: $_baseUrl',
           );
           return;
         }
       }
     } catch (e) {
-      developer.log(
+      debugPrint(
         'Failed to resolve active servers list, falling back to default mirrors. Error: $e',
       );
     }
@@ -99,7 +99,7 @@ class DioApiService implements ApiService {
       } catch (e) {
         lastError = e;
         attempts++;
-        developer.log(
+        debugPrint(
           'Request failed using $_baseUrl. Attempt $attempts of $maxAttempts. Error: $e',
         );
         if (attempts >= maxAttempts) {
@@ -108,7 +108,7 @@ class DioApiService implements ApiService {
         // Rotate to the next available server
         _currentServerIndex =
             (_currentServerIndex + 1) % _availableServers.length;
-        developer.log('Falling back to next server: $_baseUrl');
+        debugPrint('Falling back to next server: $_baseUrl');
       }
     }
 
@@ -125,7 +125,7 @@ class DioApiService implements ApiService {
     if (_stationsCache.containsKey(cacheKey)) {
       final entry = _stationsCache[cacheKey]!;
       if (!entry.isExpired(_cacheDuration)) {
-        developer.log('Returning cached top stations for limit $limit');
+        debugPrint('Returning cached top stations for limit $limit');
         return entry.data;
       }
     }
@@ -204,7 +204,7 @@ class DioApiService implements ApiService {
     if (_tagsCache.containsKey(cacheKey)) {
       final entry = _tagsCache[cacheKey]!;
       if (!entry.isExpired(_cacheDuration)) {
-        developer.log('Returning cached top tags for limit $limit');
+        debugPrint('Returning cached top tags for limit $limit');
         return entry.data;
       }
     }
@@ -238,7 +238,7 @@ class DioApiService implements ApiService {
       _tagsCache[cacheKey] = _CacheEntry(tags);
       return tags;
     } catch (e) {
-      developer.log('Error fetching tags (using local fallback tags): $e');
+      debugPrint('Error fetching tags (using local fallback tags): $e');
       return [
         'Pop',
         'Rock',
@@ -259,7 +259,7 @@ class DioApiService implements ApiService {
     if (_countriesCache.containsKey(cacheKey)) {
       final entry = _countriesCache[cacheKey]!;
       if (!entry.isExpired(_cacheDuration)) {
-        developer.log('Returning cached top countries for limit $limit');
+        debugPrint('Returning cached top countries for limit $limit');
         return entry.data;
       }
     }
@@ -297,7 +297,7 @@ class DioApiService implements ApiService {
       _countriesCache[cacheKey] = _CacheEntry(countries);
       return countries;
     } catch (e) {
-      developer.log('Error fetching countries: $e');
+      debugPrint('Error fetching countries: $e');
       return [];
     }
   }

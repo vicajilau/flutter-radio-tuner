@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,20 +11,32 @@ import '../core/di/service_locator.dart';
 import '../models/station_model.dart';
 import '../core/repositories/station_repository.dart';
 
+/// Type-safe enum for representing playback errors and connection states.
+enum PlaybackError {
+  /// The internet connection is disconnected.
+  noInternet,
+
+  /// The audio stream URL failed to load (offline or invalid node).
+  streamOffline,
+
+  /// General playback engine or volume service exception.
+  playbackError,
+}
+
 /// ============================================================================
 /// PLAYBACK PROVIDER
 /// ============================================================================
-/// 
+///
 /// This provider is responsible exclusively for the audio playback lifecycle
 /// and multimedia state management (Single Responsibility Principle).
-/// 
+///
 /// **Key Responsibilities:**
 /// 1. Orchestrates the physical [AudioPlayer] instance (`just_audio`) to stream radio URLs.
 /// 2. Listens to live stream metadata (ICY metadata) and exposes the song/track title.
 /// 3. Synchronizes system and application volume using `flutter_volume_controller`.
 /// 4. Manages progressive sleep timers (fading out volume before pausing).
 /// 5. Automatically pauses audio on internet loss and resumes playing upon recovery.
-/// 
+///
 /// **Decoupling Rationale:**
 /// Separating audio playback from the station browser / filters ensures that UI
 /// text searches or country filter changes on the Home Screen do not trigger
@@ -49,8 +60,8 @@ class PlaybackState {
   /// The last non-zero volume recorded before muting. Used to restore volume.
   final double previousVolume;
 
-  /// Human-readable error message in case stream loading or network connection fails.
-  final String? errorMessage;
+  /// Type-safe error type in case stream loading or network connection fails.
+  final PlaybackError? error;
 
   /// Number of seconds left before the active sleep timer stops playback.
   final int sleepTimeLeftSeconds;
@@ -64,7 +75,7 @@ class PlaybackState {
     this.isBuffering = false,
     this.volume = 0.8,
     this.previousVolume = 0.8,
-    this.errorMessage,
+    this.error,
     this.sleepTimeLeftSeconds = 0,
     this.currentTrackTitle,
   });
@@ -77,14 +88,16 @@ class PlaybackState {
 
   /// Return the remaining sleep timer duration formatted as MM:SS (e.g. "14:59").
   String get sleepTimeFormatted {
-    if (sleepTimeLeftSeconds <= 0) return '';
+    if (sleepTimeLeftSeconds <= 0) {
+      return '';
+    }
     final int minutes = sleepTimeLeftSeconds ~/ 60;
     final int seconds = sleepTimeLeftSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   /// Create a copy of the state with modified fields.
-  /// Nullable values like [currentStation], [errorMessage], and [currentTrackTitle]
+  /// Nullable values like [currentStation], [error], and [currentTrackTitle]
   /// use a generator function `Value? Function()?` to allow explicitly resetting them to null.
   PlaybackState copyWith({
     Station? Function()? currentStation,
@@ -92,19 +105,23 @@ class PlaybackState {
     bool? isBuffering,
     double? volume,
     double? previousVolume,
-    String? Function()? errorMessage,
+    PlaybackError? Function()? error,
     int? sleepTimeLeftSeconds,
     String? Function()? currentTrackTitle,
   }) {
     return PlaybackState(
-      currentStation: currentStation != null ? currentStation() : this.currentStation,
+      currentStation: currentStation != null
+          ? currentStation()
+          : this.currentStation,
       isPlaying: isPlaying ?? this.isPlaying,
       isBuffering: isBuffering ?? this.isBuffering,
       volume: volume ?? this.volume,
       previousVolume: previousVolume ?? this.previousVolume,
-      errorMessage: errorMessage != null ? errorMessage() : this.errorMessage,
+      error: error != null ? error() : this.error,
       sleepTimeLeftSeconds: sleepTimeLeftSeconds ?? this.sleepTimeLeftSeconds,
-      currentTrackTitle: currentTrackTitle != null ? currentTrackTitle() : this.currentTrackTitle,
+      currentTrackTitle: currentTrackTitle != null
+          ? currentTrackTitle()
+          : this.currentTrackTitle,
     );
   }
 }
@@ -117,9 +134,13 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
   Timer? _sleepTimer;
   Timer? _countdownTimer;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
-  
-  /// Cache variable indicating if the player was playing when internet connection was lost.
-  bool _wasPlayingBeforeDisconnect = false;
+
+  /// Track whether the user wants the radio to play.
+  /// Used to distinguish between a network pause and a user pause/stop.
+  bool _userWantsToPlay = false;
+
+  /// Counter to track the active async play task, canceling any older retry loops.
+  int _activePlayCount = 0;
 
   /// Exposed getter to access the raw [AudioPlayer] if direct controller hooks are needed.
   AudioPlayer get player => _player;
@@ -160,7 +181,7 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
         state = state.copyWith(
           isPlaying: isPlaying,
           isBuffering: isBuffering,
-          errorMessage: playerState.processingState == ProcessingState.completed
+          error: playerState.processingState == ProcessingState.completed
               ? () => null
               : null,
         );
@@ -170,12 +191,17 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
         }
       },
       onError: (Object e) {
-        developer.log('Player Stream Error: $e');
-        state = state.copyWith(
-          errorMessage: () => 'An error occurred during playback.',
-          isBuffering: false,
-          isPlaying: false,
-        );
+        debugPrint('Player Stream Error: $e');
+        if (_userWantsToPlay && state.currentStation != null) {
+          debugPrint('Attempting to recover from player stream error...');
+          playStation(state.currentStation!, forceReload: true);
+        } else {
+          state = state.copyWith(
+            error: () => PlaybackError.playbackError,
+            isBuffering: false,
+            isPlaying: false,
+          );
+        }
       },
     );
 
@@ -183,11 +209,11 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
     _player.icyMetadataStream.listen(
       (icyMetadata) {
         final title = icyMetadata?.info?.title;
-        developer.log('Received ICY Metadata: $title');
+        debugPrint('Received ICY Metadata: $title');
         state = state.copyWith(currentTrackTitle: () => title);
       },
       onError: (Object e) {
-        developer.log('ICY Metadata stream error: $e');
+        debugPrint('ICY Metadata stream error: $e');
       },
     );
 
@@ -200,36 +226,39 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
       (List<ConnectivityResult> results) async {
         final hasConnection = !results.contains(ConnectivityResult.none);
-        
+
         if (!hasConnection) {
-          if (state.isPlaying) {
-            developer.log('Internet connection lost. Pausing playback.');
-            _wasPlayingBeforeDisconnect = true;
+          // If internet connection is lost, pause if we were trying to play
+          if (_userWantsToPlay) {
+            debugPrint('Internet connection lost. Pausing playback.');
             await _player.pause();
             state = state.copyWith(
               isPlaying: false,
-              errorMessage: () => 'No internet connection. Playback paused.',
+              error: () => PlaybackError.noInternet,
             );
           }
         } else {
-          // If connection returns and we were playing prior to the drop, re-trigger stream buffering
-          if (_wasPlayingBeforeDisconnect && state.currentStation != null) {
-            developer.log('Internet connection restored. Re-buffering stream.');
-            _wasPlayingBeforeDisconnect = false;
-            state = state.copyWith(
-              isBuffering: true,
-              errorMessage: () => null,
-            );
-            try {
-              await playStation(state.currentStation!);
-            } catch (e) {
-              developer.log('Auto-reconnection failed: $e');
+          // If connection returns/changes and the user wants to play, re-trigger stream buffering
+          if (_userWantsToPlay && state.currentStation != null) {
+            final isPlayerStuck =
+                _player.processingState == ProcessingState.buffering ||
+                _player.processingState == ProcessingState.loading;
+            if (!state.isPlaying || isPlayerStuck || state.error != null) {
+              debugPrint(
+                'Internet connection restored/changed. Re-buffering stream.',
+              );
+              state = state.copyWith(isBuffering: true, error: () => null);
+              try {
+                await playStation(state.currentStation!, forceReload: true);
+              } catch (e) {
+                debugPrint('Auto-reconnection failed: $e');
+              }
             }
           }
         }
       },
       onError: (Object e) {
-        developer.log('Connectivity stream error: $e');
+        debugPrint('Connectivity stream error: $e');
       },
     );
   }
@@ -259,91 +288,154 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
         _player.setVolume(vol);
       });
     } catch (e) {
-      developer.log('Failed to initialize volume controller: $e');
+      debugPrint('Failed to initialize volume controller: $e');
     }
   }
 
   /// Play a selected radio station.
-  /// 
+  ///
   /// Loads the audio stream URL, configures lock screen metadata/background tasks,
   /// saves the station into the local history database, and starts playing.
-  Future<void> playStation(Station station) async {
-    if (state.currentStation?.stationuuid == station.stationuuid &&
+  /// Retries connection up to 3 times with delays if the initial load fails.
+  Future<void> playStation(Station station, {bool forceReload = false}) async {
+    // Check initial connectivity before trying to connect
+    final connectivityResults = await Connectivity().checkConnectivity();
+    final hasConnection = !connectivityResults.contains(
+      ConnectivityResult.none,
+    );
+    if (!hasConnection) {
+      state = state.copyWith(
+        currentStation: () => station,
+        error: () => PlaybackError.noInternet,
+        isBuffering: false,
+        isPlaying: false,
+      );
+      _userWantsToPlay =
+          true; // Mark as true so it auto-plays when internet returns!
+      return;
+    }
+
+    if (!forceReload &&
+        state.currentStation?.stationuuid == station.stationuuid &&
         _player.processingState == ProcessingState.ready) {
       togglePlay();
       return;
     }
+
+    _userWantsToPlay = true;
+    _activePlayCount++;
+    final int myPlaySession = _activePlayCount;
 
     await _player.setVolume(state.volume);
 
     state = state.copyWith(
       currentStation: () => station,
       isBuffering: true,
-      errorMessage: () => null,
+      error: () => null,
       currentTrackTitle: () => null,
     );
 
     // Save playing station to history via the repository
     _repository.addHistory(station);
 
-    try {
-      final session = await AudioSession.instance;
-      await session.setActive(true);
+    int retries = 0;
+    while (retries < 3) {
+      if (!_userWantsToPlay || myPlaySession != _activePlayCount) {
+        return;
+      }
 
-      await _player.setVolume(state.volume);
+      try {
+        final session = await AudioSession.instance;
+        await session.setActive(true);
 
-      final String streamUrl = station.urlResolved.isNotEmpty
-          ? station.urlResolved
-          : station.url;
+        await _player.setVolume(state.volume);
 
-      developer.log('Loading live radio stream: $streamUrl');
+        final String streamUrl = station.urlResolved.isNotEmpty
+            ? station.urlResolved
+            : station.url;
 
-      // Set audio source with metadata matching background capabilities
-      await _player.setAudioSource(
-        AudioSource.uri(
-          Uri.parse(streamUrl),
-          tag: MediaItem(
-            id: station.stationuuid,
-            album: station.country.isNotEmpty ? station.country : 'Radio Tuner',
-            title: station.name,
-            artUri: station.favicon.isNotEmpty
-                ? Uri.tryParse(station.favicon)
-                : null,
+        debugPrint(
+          'Loading live radio stream (Attempt ${retries + 1}): $streamUrl',
+        );
+
+        if (myPlaySession != _activePlayCount) {
+          return;
+        }
+
+        // Set audio source with metadata matching background capabilities
+        await _player.setAudioSource(
+          AudioSource.uri(
+            Uri.parse(streamUrl),
+            tag: MediaItem(
+              id: station.stationuuid,
+              album: station.country.isNotEmpty
+                  ? station.country
+                  : 'Radio Tuner',
+              title: station.name,
+              artUri: station.favicon.isNotEmpty
+                  ? Uri.tryParse(station.favicon)
+                  : null,
+            ),
           ),
-        ),
-      );
+        );
 
-      _player.play();
-    } catch (e) {
-      developer.log('Error playing stream: $e');
-      state = state.copyWith(
-        errorMessage: () => 'Unable to play this station. The stream may be offline.',
-        isBuffering: false,
-        isPlaying: false,
-      );
-      await _player.stop();
+        if (!_userWantsToPlay || myPlaySession != _activePlayCount) {
+          return;
+        }
+        _player.play();
+        return; // Success!
+      } catch (e) {
+        debugPrint('Error playing stream (Attempt ${retries + 1}): $e');
+        retries++;
+
+        if (myPlaySession != _activePlayCount) {
+          return;
+        }
+
+        if (retries >= 3 || !_userWantsToPlay) {
+          state = state.copyWith(
+            error: () => PlaybackError.streamOffline,
+            isBuffering: false,
+            isPlaying: false,
+          );
+          _userWantsToPlay = false; // Reset if all retries fail
+          await _player.stop();
+          return;
+        }
+        state = state.copyWith(isBuffering: true, error: () => null);
+        debugPrint('Retrying stream in 2 seconds...');
+        await Future.delayed(const Duration(seconds: 2));
+      }
     }
   }
 
   /// Toggle play and pause state for the active station.
   void togglePlay() {
-    if (state.currentStation == null) return;
+    if (state.currentStation == null) {
+      return;
+    }
 
     if (state.isPlaying) {
+      _userWantsToPlay = false;
+      _activePlayCount++; // Invalidate any running retry loops
       _player.pause();
     } else {
+      _userWantsToPlay = true;
       _player.play();
     }
   }
 
   /// Stop playback, cancel active sleep timers, and clear active station fields.
   Future<void> stopRadio() async {
+    _userWantsToPlay = false;
+    _activePlayCount++; // Invalidate any running retry loops
     cancelSleepTimer();
     state = state.copyWith(
       isBuffering: false,
       isPlaying: false,
       currentStation: () => null,
       currentTrackTitle: () => null,
+      error: () => null,
     );
     await _player.stop();
   }
@@ -359,10 +451,10 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
       try {
         FlutterVolumeController.setVolume(volume);
       } catch (e) {
-        developer.log('Failed to set system volume: $e');
+        debugPrint('Failed to set system volume: $e');
       }
     }
-    
+
     _player.setVolume(volume);
   }
 
@@ -377,7 +469,7 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
   }
 
   /// Start a sleep timer to pause playback after a duration.
-  /// 
+  ///
   /// Spawns a periodic timer to update the countdown in UI and schedules
   /// a fading process that smoothly lowers the volume before pausing the player.
   void startSleepTimer(Duration duration) {
@@ -388,7 +480,9 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
     // Periodic timer to tick down seconds in UI
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (state.sleepTimeLeftSeconds > 0) {
-        state = state.copyWith(sleepTimeLeftSeconds: state.sleepTimeLeftSeconds - 1);
+        state = state.copyWith(
+          sleepTimeLeftSeconds: state.sleepTimeLeftSeconds - 1,
+        );
       } else {
         timer.cancel();
       }
@@ -396,7 +490,9 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
 
     // Sleep trigger timer
     _sleepTimer = Timer(duration, () async {
-      developer.log('Sleep timer triggered. Stopping playback.');
+      debugPrint('Sleep timer triggered. Stopping playback.');
+      _userWantsToPlay = false;
+      _activePlayCount++; // Invalidate any running retry loops
 
       // Fade-out volume control
       const int steps = 10;
@@ -411,7 +507,7 @@ class PlaybackNotifier extends Notifier<PlaybackState> {
       }
 
       _player.pause();
-      
+
       // Restore initial volume level for when player starts next time
       await _player.setVolume(initialPlayerVolume);
       cancelSleepTimer();

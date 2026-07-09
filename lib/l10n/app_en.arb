@@ -183,5 +183,17 @@
   "appTitle": "Radio Tuner",
   "@appTitle": {
     "description": "The title of the application"
+  },
+  "noInternet": "No internet connection",
+  "@noInternet": {
+    "description": "Error message when device has no internet access"
+  },
+  "reconnecting": "Reconnecting...",
+  "@reconnecting": {
+    "description": "Buffering status when internet reconnection is active"
+  },
+  "streamOffline": "Unable to play this station. The stream may be offline.",
+  "@streamOffline": {
+    "description": "Error message when radio stream fails to load"
   }
 }

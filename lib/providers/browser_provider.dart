@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/di/service_locator.dart';
 import '../models/station_model.dart';
@@ -8,16 +8,16 @@ import '../core/repositories/station_repository.dart';
 /// ============================================================================
 /// BROWSER PROVIDER
 /// ============================================================================
-/// 
+///
 /// This provider is responsible exclusively for searching, browsing, caching,
 /// and displaying radio stations from the repository (Single Responsibility Principle).
-/// 
+///
 /// **Key Responsibilities:**
 /// 1. Queries the [StationRepository] for popular stations, category tags, and countries.
 /// 2. Manages search queries and tag filtering logic in the exploration section.
 /// 3. Maintains the loaded list of historical stations locally logged.
 /// 4. Exposes state flags such as initialization status, active loadings, or API error messages.
-/// 
+///
 /// **Decoupling Rationale:**
 /// Keeps all search query state, text changes, loading flags, and lists isolated.
 /// This prevents keystroke debounces or country category filter changes in the UI
@@ -117,16 +117,16 @@ class BrowserNotifier extends Notifier<BrowserState> {
     try {
       // Connect to the API server and establish connectivity checks
       await _repository.initialize();
-      
+
       // Fetch popular stations (will use Dio memory caching internally)
       final popular = await _repository.getPopularStations();
-      
+
       // Fetch popular tags (with static fallback in case of server failure)
       List<String> tagsList = [];
       try {
         tagsList = await _repository.getPopularTags();
       } catch (e) {
-        developer.log('Error fetching tags: $e');
+        debugPrint('Error fetching tags: $e');
         tagsList = [
           'Pop',
           'Rock',
@@ -141,7 +141,7 @@ class BrowserNotifier extends Notifier<BrowserState> {
 
       // Load local history log
       await loadHistory();
-      
+
       state = state.copyWith(
         popularStations: popular,
         tags: tagsList,
@@ -150,9 +150,10 @@ class BrowserNotifier extends Notifier<BrowserState> {
         isLoadingData: false,
       );
     } catch (e) {
-      developer.log('Initialization error: $e');
+      debugPrint('Initialization error: $e');
       state = state.copyWith(
-        errorMessage: () => 'Failed to load initial radio data. Please check your connection.',
+        errorMessage: () =>
+            'Failed to load initial radio data. Please check your connection.',
         stations: [],
         isLoadingData: false,
       );
@@ -170,7 +171,7 @@ class BrowserNotifier extends Notifier<BrowserState> {
       final popular = await _repository.getPopularStations();
       state = state.copyWith(popularStations: popular);
     } catch (e) {
-      developer.log('Error fetching popular stations: $e');
+      debugPrint('Error fetching popular stations: $e');
     }
   }
 
@@ -180,7 +181,7 @@ class BrowserNotifier extends Notifier<BrowserState> {
       final tagsList = await _repository.getPopularTags();
       state = state.copyWith(tags: tagsList);
     } catch (e) {
-      developer.log('Error fetching tags: $e');
+      debugPrint('Error fetching tags: $e');
     }
   }
 
@@ -190,21 +191,23 @@ class BrowserNotifier extends Notifier<BrowserState> {
       final history = await _repository.getHistory();
       state = state.copyWith(historyStations: history);
     } catch (e) {
-      developer.log('Error fetching history: $e');
+      debugPrint('Error fetching history: $e');
     }
   }
 
   /// Search and filter stations using query and/or selected tag.
-  /// 
+  ///
   /// Updates search filters in the state and performs repository queries.
   /// If filters are completely empty, falls back to the popular stations list.
   Future<void> search({String? query, String? tag}) async {
     state = state.copyWith(isLoadingData: true);
-    
+
     String currentQuery = state.searchQuery;
     String currentTag = state.selectedTag;
 
-    if (query != null) currentQuery = query;
+    if (query != null) {
+      currentQuery = query;
+    }
     if (tag != null) {
       // Toggle logic: if tag is already selected, deselect it. Otherwise select it.
       if (currentTag == tag) {
@@ -214,10 +217,7 @@ class BrowserNotifier extends Notifier<BrowserState> {
       }
     }
 
-    state = state.copyWith(
-      searchQuery: currentQuery,
-      selectedTag: currentTag,
-    );
+    state = state.copyWith(searchQuery: currentQuery, selectedTag: currentTag);
 
     try {
       List<Station> results = [];
@@ -231,7 +231,7 @@ class BrowserNotifier extends Notifier<BrowserState> {
       }
       state = state.copyWith(stations: results, isLoadingData: false);
     } catch (e) {
-      developer.log('Search error: $e');
+      debugPrint('Search error: $e');
       state = state.copyWith(
         errorMessage: () => 'Search failed. Please try again.',
         stations: [],

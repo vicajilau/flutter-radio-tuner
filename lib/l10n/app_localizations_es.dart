@@ -145,4 +145,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appTitle => 'Sintonizador de Radio';
+
+  @override
+  String get noInternet => 'Sin conexión a internet';
+
+  @override
+  String get reconnecting => 'Reconectando...';
+
+  @override
+  String get streamOffline =>
+      'No se puede reproducir esta emisora. La transmisión podría estar fuera de línea.';
 }

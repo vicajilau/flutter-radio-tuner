@@ -141,6 +141,63 @@ class PlayerScreen extends ConsumerWidget {
                               ),
                             ),
 
+                            if (radioState.error != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20.0,
+                                  vertical: 8.0,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 12.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.redAccent.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.wifi_off_rounded,
+                                        color: Colors.redAccent,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          radioState.error ==
+                                                  PlaybackError.noInternet
+                                              ? context.l10n.noInternet
+                                              : (radioState.error ==
+                                                        PlaybackError
+                                                            .streamOffline
+                                                    ? context.l10n.streamOffline
+                                                    : context
+                                                          .l10n
+                                                          .connectionError),
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                            color: context.colors.textPrimary,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
                             const Spacer(),
 
                             // Center Album Art / Wave Visualizer

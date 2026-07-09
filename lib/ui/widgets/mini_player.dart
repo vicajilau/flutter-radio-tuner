@@ -29,19 +29,28 @@ class MiniPlayer extends ConsumerWidget {
     final bool isPortrait =
         MediaQuery.orientationOf(context) == Orientation.portrait;
 
-    final String displayTitle =
-        (radioState.currentTrackTitle != null &&
-            radioState.currentTrackTitle!.isNotEmpty)
-        ? radioState.currentTrackTitle!
-        : currentStation.name;
+    final bool hasError = radioState.error != null;
+    final String displayTitle = hasError
+        ? (radioState.error == PlaybackError.noInternet
+              ? context.l10n.noInternet
+              : (radioState.error == PlaybackError.streamOffline
+                    ? context.l10n.streamOffline
+                    : context.l10n.connectionError))
+        : ((radioState.currentTrackTitle != null &&
+                  radioState.currentTrackTitle!.isNotEmpty)
+              ? radioState.currentTrackTitle!
+              : currentStation.name);
 
-    final String displaySubtitle =
-        (radioState.currentTrackTitle != null &&
-            radioState.currentTrackTitle!.isNotEmpty)
-        ? '${currentStation.name}  •  ${isBuffering ? context.l10n.bufferingStream : (isPlaying ? context.l10n.playingLive : context.l10n.paused)}'
-        : (isBuffering
-              ? context.l10n.bufferingStream
-              : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}');
+    final String displaySubtitle = hasError
+        ? (radioState.error == PlaybackError.noInternet
+              ? context.l10n.reconnecting
+              : context.l10n.paused)
+        : ((radioState.currentTrackTitle != null &&
+                  radioState.currentTrackTitle!.isNotEmpty)
+              ? '${currentStation.name}  •  ${isBuffering ? context.l10n.bufferingStream : (isPlaying ? context.l10n.playingLive : context.l10n.paused)}'
+              : (isBuffering
+                    ? context.l10n.bufferingStream
+                    : '${isPlaying ? context.l10n.playingLive : context.l10n.paused}${currentStation.bitrate > 0 ? '  •  ${currentStation.bitrate} kbps' : ''}'));
 
     return SafeArea(
       top: false,
@@ -145,11 +154,13 @@ class MiniPlayer extends ConsumerWidget {
                         displaySubtitle,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 11,
-                          color: isBuffering
-                              ? context.colors.primaryStart
-                              : (isPlaying
-                                    ? context.colors.secondary
-                                    : context.colors.textSecondary),
+                          color: hasError
+                              ? Colors.redAccent
+                              : (isBuffering
+                                    ? context.colors.primaryStart
+                                    : (isPlaying
+                                          ? context.colors.secondary
+                                          : context.colors.textSecondary)),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

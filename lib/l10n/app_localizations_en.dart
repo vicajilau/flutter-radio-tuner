@@ -141,4 +141,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appTitle => 'Radio Tuner';
+
+  @override
+  String get noInternet => 'No internet connection';
+
+  @override
+  String get reconnecting => 'Reconnecting...';
+
+  @override
+  String get streamOffline =>
+      'Unable to play this station. The stream may be offline.';
 }
