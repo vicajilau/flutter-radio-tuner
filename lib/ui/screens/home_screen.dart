@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/browser_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/extensions/context_l10n.dart';
+import '../widgets/app_annotated_region.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/mini_player.dart';
 import '../widgets/favorites_deck.dart';
@@ -43,21 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final systemUiOverlayStyle = isDark
-        ? SystemUiOverlayStyle.light.copyWith(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
-            statusBarBrightness: Brightness.dark,
-          )
-        : SystemUiOverlayStyle.dark.copyWith(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
-          );
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: systemUiOverlayStyle,
+    return AppAnnotatedRegion(
       child: Scaffold(
         body: Stack(
           children: [

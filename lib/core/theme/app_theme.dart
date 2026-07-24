@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Context extension for quick access to theme extension colors.
+/// Context extension for quick access to theme extension colors and system UI overlay styles.
 extension ThemeContext on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>()!;
+
+  /// Returns system UI overlay style with transparent status bar dynamically tuned to theme brightness.
+  SystemUiOverlayStyle get systemUiOverlayStyle {
+    final isDark = Theme.of(this).brightness == Brightness.dark;
+    return isDark
+        ? SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          )
+        : SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+          );
+  }
 }
 
 /// Custom ThemeExtension defining premium colors and gradients for the design system.
