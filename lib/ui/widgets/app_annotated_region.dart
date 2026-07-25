@@ -7,10 +7,7 @@ import '../../core/theme/app_theme.dart';
 class AppAnnotatedRegion extends StatelessWidget {
   final Widget child;
 
-  const AppAnnotatedRegion({
-    super.key,
-    required this.child,
-  });
+  const AppAnnotatedRegion({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
